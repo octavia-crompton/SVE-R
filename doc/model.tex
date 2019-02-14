@@ -2,7 +2,7 @@
 
 \usepackage[inner=3cm,outer=3cm]{geometry} %left=4cm,right=2cm would be equivalent
 \usepackage[utf8]{inputenc}
-\usepackage{hyperref}
+%\usepackage{hyperref}
 \usepackage{natbib}
 \usepackage{amsmath}
 \usepackage{parskip}
@@ -423,14 +423,14 @@ Boundary types are:
 \begin{itemize}
 	\item  \code{itype} = 1 for a closed boundary
 	\item  \code{itype} = 0 for an open boundary
-	\item  \code{itype} = 4 for a subcritical fixed flux boundary.\end{itemize}
+	\item  \code{itype} = 4 for a subcritical fixed flux boundary  (limited support)
+	\item  \code{itype} = 5 for a supercritical influx boundary (no support).
+ \end{itemize}
  
   For subcritical fixed flux boundary,  the normal depth is computed  with Manning's equation with $n=0.1$.  
-The input parameter \code{influx} is specified in unis m$^2$/s.
- 
- The rainfall rate (in cm/hr) can be related to \code{influx} as:
-$p$ (cm/hr) = $q$ (m$^2$/s)*3600 s/hr /(Ly m) * 100 cm/m
- or $q$*3.6e5/$L_y$ 
+The input parameter \code{influx} is specified in unis m$^2$/s.  The rainfall rate (in cm/hr) can be related to \code{influx} as:
+$p$ (cm/hr) = $q$ (m$^2$/s) $\cdot$ 3600 s/hr /($L_y$ m) $\cdot$ 100 cm/m
+ or $q \cdot$3.6e5/$L_y$.
  
  Equivalent \code{influx} is $p*Ly/3.6e5$ = equivalent $q$ (m\^2/s)
 
@@ -873,7 +873,7 @@ and executed as \code{.sw}, where \code{sw} is the name of the compiled executab
 
 
 \subsection{Output files}
-Output files are read by Python script \code{batch\_read.py}, using functions from \code{output\_dry.py}.  Most outputs are saved at intervals of  $dt\_p$, to limit the size of the output files.
+ Most outputs are saved at intervals of  $dt\_p$, to limit the size of the output files.
 
 \begin{itemize}
 	\item \code{time.out} : file containing time, and max CFL number at each timestep.
@@ -888,29 +888,11 @@ Output files are read by Python script \code{batch\_read.py}, using functions fr
 
 \subsubsection*{h.out}
 
+Columns are \code{j,k,h,u,v,zinflmap2, xflux0,yflux0,xflux1,yflux1}. 
 
-Columns are
-\begin{enumerate}
-\item \code{j,k,h,u,v,zinflmap2, xflux0,yflux0,xflux1,yflux1}
-\item Rhese variables are written for every grid cell in the domain (every j,k) every nprt timesteps.  Following, a line 
-\item These variables are written to file when \code{myoutput} is called, nprt time steps.  
-\item \code{zinflmap2} contains the total volume of water infilrated in cell j,k, and is reset to zero as soon as this variable is written to file. 
-\end{enumerate} 
+These variables are written to \code{h.out} for every grid cell (every j,k) when \code{myoutput} is called, every nprt timesteps (every \code{dt\_p}. 
 
-The Python function \code{get\_h} in \code{output\_dry.py} reads \code{h.out} and returns:
-\code{h,u,v,inflVmap,xflux0,yflux0,xflux1,yflux1}, all with dimensions: \code{nprt x ncol x nrow}.  
-Units are:
-\begin{itemize}
-	\item \code{h} : m
-	\item \code{u, v} : m/s
-	\item \code{inflVmap} : cm m$^2$ (converted from Fortran m$^2$ )
-	\item \code{xflux0, yflux0, xflux1, yflux1} : cm m$^2$ (converted from Fortran m$^2$ )
-	       \subitem fluxes are positive directed out of the domain.
-	
-\end{itemize}
-
-
- \code{zinflc}: infiltration depth in cm
+ \code{zinflmap2} contains the total volume of water infiltrated in cell j,k, and is reset to zero when this variable is written to file. 
 
 
 \subsubsection*{dvol.out}
@@ -921,47 +903,84 @@ Columns are \code{dvol, flux, infl,zain}  from Fortran mass tracking, containing
 The Python function \code{get\_dvol} in \code{output\_dry.py} reads only the first three columns {dvol, flux, infl}, and the last is available for mass balance debugging.  \code{get\_dvol} normalizes by the domain area (Lx*Ly) and converts to cm.
 
 
-\section{Python wrappers}
+\section{The Simulated Domain}
 
-Python scripts generate the Fortran input files and read the Fortran output files.  
+To simulate runoff/runon environments on patchily-vegetated hillslopes, several aspects of the BK model have been modified (in addition to coupling to a 1D Richards solver).  This section describes the simulated domain, as illustrated in Figure XXXX.  
+
+First,  roughness parameters are specified separately for vegetated and bare cells. 
+ The parameters for the resistance formula for vegetated cells are specified as  \code{alpha}, \code{eta} and \code{m}  ($\alpha$, $\eta$ and $m$), and for bare soil cells as  \code{alpha\_B}, \code{eta\_B} and \code{m\_B}  ($\alpha_B$, $\eta_B$ and $m_B$).s
+  The default soil parameters are Manning's equation with \code{alpha = 0.1}, and \code{alpha\_B = 0.03}.
 
 
+The model is set up to specify rain-driven overland flow on a planar hillslope, for which the lateral boundaries are closed with the exception of the open boundary at the bottom of the hillslope.  Limited support is provided for a fixed flux (subcritical) upslope boundary condition,  where the inflow boundary dimensions are equal to the entire upslope area.  Code for other boundary conditions is not provided, but can be implemented with modification to \code{input\_coords.py} (or directly to the Fortran input parameter functions). 
+
+The bare soil areas are represented by a two-layer model, where the upper, less-permeable  layer represents a surface crust.  With the exception of $K_{s}$, the van Genuchten parameters are the same between vegetated and bare cells. In the bare soil areas, $K_{s}$ of the lower soil layer is  equal to that in the vegetated patches (See schematic).
+The van Genuchten parameters and vertical structure of the soil can be modified in \code{input\_phi.py}.
+
+
+\section{Python wrapper scripts}
+
+Example Python scripts are provided to generate the Fortran input files, execute \code{dry.f} and read the outputs.   \code{call\_dry.py} is a control script which executes each of these components, as illustrated in the Figure \ref{schematic} schematic.
+
+ \begin{figure}[h]
+ \centering
+\includegraphics[width=38pc]{grid/schematic.png}
+ \caption{Schematic illustrating the python wrapper script workflow. \code{call\_dry} takes as input \code{sim\_name}, the name of a subfolder containing the parameter file \code{params.json}.}
+ \label{schematic}
+ \end{figure}
+ 
+ 
+\code{output\_dry.py} contains three main sub-functions, listed below:
  \begin{itemize}
  	\item  \code{call\_dry.py} 
 	\begin{itemize}
-		\item \code{sim\_input} 
+		\item \code{sim\_input.py} 
 		\item \code{runmodel}
-		\item \code{read\_sim}
+		\item \code{sim\_read.py}
 	\end{itemize}
  \end{itemize}
  
  \code{call\_dry.py}  is a control script which writes the Fortan input files, compiles and executes the Fortran code dry.for, and reads the output files.
+
  
 
-\code{sim\_input} makes the input files. 
+\subsection{To write Fortran input files: \code{sim\_input.py}}
 
-\subsection{sim\_input}
-
- \code{sim\_input} specifies default parameters where no parameters are provided in \code{params.json}. For example, if \code{ncol} is not provided, an aspect ratio must be included instead (\code{aspect})
-
-
-Notes on roughness parameters:
+\code{sim\_input.py} reads and interprets the parameter file \code{params.json} located in the simulation folder \code{sim\_name}.   See Appendix B for examples of the Fortran input files.
+ \code{sim\_input} specifies default parameters where no parameters are provided in \code{params.json}. For example, if \code{ncol} is not provided, an aspect ratio must be included instead (\code{aspect}).
+ 
+\code{sim\_input.py} calls additional functions to write the Fortran input files located in \code{sim\_name/input}:
 \begin{itemize}
-	\item roughness parameters are specified separately for vegetated and bare cells. 
-	\item parameters for the resistance formula for vegetated cells are specified as  \code{alpha}, \code{eta} and \code{m}  ($\alpha$, $\eta$ and $m$), and for bare soil cells as  \code{alpha\_B}, \code{eta\_B} and \code{m\_B}  ($\alpha_B$, $\eta_B$ and $m_B$).s
-	\item The default soil parameters are Manning's equation with \code{alpha = 0.1}, and \code{alpha\_B = 0.03}.
-\end{itemize}
+	\item \code{write\_param}: writes the general parameter file  \code{params.dat}.
+	\item \code{input\_veg.py}: contains functions to write the input vegetation file \code{veg.dat}.
+	\item \code{input\_coords.py}: contains functions to write the  grid and topography files \code{coords.dat}, \code{boundary.dat}, \code{nodes.dat}. 
+	\item \end{itemize}
 
 
-Some variables cannot be initialized / specified from \code{params.json}  and must be modified within the code:
-\begin{itemize}
-\item inflow boundary dimensions (currently = entire upslope area)	
-\item van Genuchten parameters of the seal layer
-\item van Genuchten parameters are hard coded be the same between vegetated and bare cells (this can be changed in \code{input\_phi.py}). 
-\end{itemize}
 
 
 Note on the inflow boundary condition:  If the upslope boundary is a fixed flux boundary, \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. The code would need to be modified with the addition of a new variable (e.g. time of inflow end) to change this, which would be straightforward.
+
+\subsection{To compile and execute \code{dry.f}: \code{read\_sim})}
+\subsection{To read the Fortran output files: \code{read\_sim})}
+
+Output files are read by Python script \code{batch\_read.py}, using functions from \code{output\_dry.py}. 
+
+The Python function \code{get\_h} in \code{output\_dry.py} reads \code{h.out} and returns:
+\code{h,u,v,inflVmap,xflux0,yflux0,xflux1,yflux1}, all with dimensions: \code{nprt x ncol x nrow}.  
+Units are:
+\begin{itemize}
+	\item \code{h} : m
+	\item \code{u, v} : m/s
+	\item \code{inflVmap} : cm m$^2$ (converted from m$^2$ )
+	\item \code{xflux0, yflux0, xflux1, yflux1} : cm m$^2$ (converted from m$^2$ )
+	       \subitem fluxes are positive directed out of the domain.
+\end{itemize}
+
+
+ \code{zinflc}: infiltration depth in cm
+
+
 
 %Either or inputs: \code{s\_scale} or \code{KsB}.  
 %If \code{KsB} not in params.json, use \code{KsB = KsV/s\_scale}. 
@@ -1022,16 +1041,6 @@ Note on the inflow boundary condition:  If the upslope boundary is a fixed flux 
 %- ksatB :Ksat of impermeable  (impermeable) areas (cm/s)
 
 
-\subsection{To write Fortran input files: \code{sim\_input.py}}
-
-\subsubsection*{Input vegetation file}
-
-\code{sim\_input.py} calls \code{input\_veg.py} to write the input vegetation file (\code{veg.dat})
-Vegetation types
-\begin{itemize} 
-	\item \code{randv} : 
-	\item \code{image} : 
-\end{itemize}
 
 
 	
@@ -1096,8 +1105,8 @@ Stand alone implementations
 
 \subsubsection*{Richards alone ipynb notebooks}
 \begin{itemize}
-	\item \code{Richards\_basuc.ipynb} : a simple ipynb implementation of the Richards equation solver, following \textit{Celia et al.} (1990).  Translated from iowa matlab code:\\
- 	\url{https://leaf.boisestate.edu/blog/2010/11/07/richards-solver-code/}
+	\item \code{Richards\_basuc.ipynb} : a simple ipynb implementation of the Richards equation solver, following \textit{Celia et al.} (1990).  Translated from Alejandro Flores' Matlab version:
+	\subitem	\code{https://leaf.boisestate.edu/blog/2010/11/07/richards-solver-code/}
 	\item \code{Richards.ipynb} : uses  \code{Richards.py} from \code{richards1D.py}.  Need to add crust functionality and saturation logic to this module!f
 	\item 
 \end{itemize}
