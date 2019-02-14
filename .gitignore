@@ -1,0 +1,15 @@
+.dropbox
+.DS_Store
+.ipynb_checkpoints
+Icon?
+*.pklz
+*/output
+*.pyc
+*.aux
+*.bbl
+*.blg
+*.tex
+*.log
+*.out
+*.pptx
+*.toc

@@ -1,0 +1,19 @@
+number of boundary cell 
+  4 
+ j    k          inum    itype             ipos 
+1     1             2       1        0         4        1      
+1     2             2       1        4         4        3      
+2     2             2       4        1         3        2      
+2     1             2       1        0         2        1      
+ncol
+2
+nrow
+2
+j     kbeg          kend 
+    1      1             2   
+    2      1             2   
+number of fixed bc cells, ndir    
+ 2  
+ j     k    fix h    fix u    fix v	
+1     2     0.0     0.0     -2e-05     
+2     2     0.0     0.0     -2e-05     
