@@ -948,7 +948,7 @@ Python scripts generate the Fortran input files and read the Fortran output file
 Notes on roughness parameters:
 \begin{itemize}
 	\item roughness parameters are specified separately for vegetated and bare cells. 
-	\item parameters for the resistance formula for vegetated cells are specified as  \code{alpha}, \code{eta} and \code{m}  ($\alpha$, $\eta$ and $m$), and for bare soil cells as  \code{alpha\_B}, \code{eta\_B} and \code{m\_B}  ($\alpha_B$, $\eta_B$ and $m_B$).
+	\item parameters for the resistance formula for vegetated cells are specified as  \code{alpha}, \code{eta} and \code{m}  ($\alpha$, $\eta$ and $m$), and for bare soil cells as  \code{alpha\_B}, \code{eta\_B} and \code{m\_B}  ($\alpha_B$, $\eta_B$ and $m_B$).s
 	\item The default soil parameters are Manning's equation with \code{alpha = 0.1}, and \code{alpha\_B = 0.03}.
 \end{itemize}
 
@@ -960,6 +960,8 @@ Some variables cannot be initialized / specified from \code{params.json}  and mu
 \item van Genuchten parameters are hard coded be the same between vegetated and bare cells (this can be changed in \code{input\_phi.py}). 
 \end{itemize}
 
+
+Note on the inflow boundary condition:  If the upslope boundary is a fixed flux boundary, \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. The code would need to be modified with the addition of a new variable (e.g. time of inflow end) to change this, which would be straightforward.
 
 %Either or inputs: \code{s\_scale} or \code{KsB}.  
 %If \code{KsB} not in params.json, use \code{KsB = KsV/s\_scale}. 
@@ -1178,7 +1180,9 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
 \subsection{boundary.dat}
 
 Sample \code{boundary.dat} for the 2x2 grid example, for which every cell is a boundary cell. 
-The array on lines 3-7 show the (j,k) indices for each boundary cell, the number of boundaries associated with that cell, and boundary type of each boundary cell (1 for 
+The array on lines 3-7 show the (j,k) indices for each boundary cell, the number of boundaries associated with that cell, and boundary type of each boundary cell.
+
+
 \begin{verbatim}
 number of boundary cell 
   4 
@@ -1202,6 +1206,10 @@ number of fixed bc cells, ndir
 \end{verbatim}
 
 \subsection{coords.dat}
+
+In the first row, the first value specifies the number of nodes (\code{npt}), and the second specifies the number of cells (\code{ne}).  The remaining rows list the x,y,z coordinates at the nodes, in order of node number. Below is an example \code{coords.dat} file for the 2$\times$2 exampleg rid.
+
+
 \begin{verbatim}
 9        4            
 0.0      0.0      0.0       

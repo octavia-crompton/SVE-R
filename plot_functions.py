@@ -7,11 +7,11 @@ from scipy.ndimage import convolve
 import pandas as pd
 import matplotlib.colors as colors
 
+import cmocean
 
 import warnings
 warnings.filterwarnings("ignore")
 
-import cmocean
 plt.style.use('ggplot')
 import seaborn as sns
 sns.set(font_scale = 1.3)
@@ -26,8 +26,7 @@ plt.rc('axes',edgecolor='grey')
 plt.rcParams['axes.spines.top']= 0
 plt.rcParams['axes.spines.right']= 0
 plt.rcParams['axes.spines.left']= 1
-plt.rcParams['axes.spines.bottom']= 1
-
+plt.rcParams['axes.spines.bottom']= 1   
 
 import itertools
 from itertools import cycle
@@ -223,3 +222,32 @@ def colormap(df, array,  ax = '',
     
     return zinflplot
                                                                        
+
+# code snippets, stuctured as functions
+def place_AB():
+    """
+    snippet to place As and Bs in figures 
+    """
+    for i, label in enumerate(('A', 'B')):
+        ax = plt.subplot(1,2,i+1)
+        ax.text(-0.05, 1.15, label, transform=ax.transAxes,
+          fontsize=16, fontweight='bold', va='top')
+
+def add_single_colorbar():
+    """
+    place colorbar when there are multiple subplots
+    """
+    cbaxes = fig.add_axes([.92, 0.13, 0.02, 0.75]) 
+    cb = plt.colorbar(zinflplot, cax = cbaxes) 
+    cb.set_label('cm', fontsize = 14)
+    
+def plae_legend(ax):
+    """ 
+    place the legend outside of the plot
+    """
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), title = 'time (min)')
+        
+# to save a figure
+# plt.savefig('{0}/fig.png'.format(path),bbox_inches='tight')
+        
+    
