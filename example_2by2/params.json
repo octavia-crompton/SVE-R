@@ -25,7 +25,7 @@
     "stop_tol"  : 1e-2,             
     "ponding" : 1,             
     "dz" : 1.0,
-    "zseal" : 20.0,        
+    "zseal" : 4.0,        
     "print_count" : 30,                            
     "dt_r" : 2.0, 
     "zmax" : 20,                                        

@@ -905,14 +905,23 @@ The Python function \code{get\_dvol} in \code{output\_dry.py} reads only the fir
 
 \section{The Simulated Domain}
 
-To simulate runoff/runon environments on patchily-vegetated hillslopes, several aspects of the BK model have been modified (in addition to coupling to a 1D Richards solver).  This section describes the simulated domain, as illustrated in Figure XXXX.  
+To simulate runoff/runon environments on patchily-vegetated hillslopes, several aspects of the BK model have been modified (in addition to coupling to a 1D Richards solver).  This section describes the simulated domain, as illustrated in Figure \ref{domain_schematic}.
 
+ \begin{figure}[h]
+ \centering
+\includegraphics[width=20pc]{grid/domain_schematic.png}
+ \caption{Schematic of the model domain.  The darker shading under the non-vegetated regions represents the surface crust.  $K_{s,V}$ and $K_{s,B}$  represent the saturated hydraulic conductivities of undisturbed soil and surface crust, respectively.}
+ \label{domain_schematic}
+ \end{figure}
+ 
+ 
 First,  roughness parameters are specified separately for vegetated and bare cells. 
  The parameters for the resistance formula for vegetated cells are specified as  \code{alpha}, \code{eta} and \code{m}  ($\alpha$, $\eta$ and $m$), and for bare soil cells as  \code{alpha\_B}, \code{eta\_B} and \code{m\_B}  ($\alpha_B$, $\eta_B$ and $m_B$).s
   The default soil parameters are Manning's equation with \code{alpha = 0.1}, and \code{alpha\_B = 0.03}.
 
 
-The model is set up to specify rain-driven overland flow on a planar hillslope, for which the lateral boundaries are closed with the exception of the open boundary at the bottom of the hillslope.  Limited support is provided for a fixed flux (subcritical) upslope boundary condition,  where the inflow boundary dimensions are equal to the entire upslope area.  Code for other boundary conditions is not provided, but can be implemented with modification to \code{input\_coords.py} (or directly to the Fortran input parameter functions). 
+The model is set up to specify rain-driven overland flow on a planar hillslope, for which the lateral boundaries are closed with the exception of the open boundary at the bottom of the hillslope.  Limited support is provided for a fixed flux (subcritical) upslope boundary condition,  where the inflow boundary dimensions are equal to the entire upslope area.  Code for other boundary conditions is not provided, but can be implemented with modification to \code{input\_coords.py} (or directly to the Fortran input parameter functions).
+For a fixed flux upslope boundary, \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. The code would need to be modified with the addition of a new variable (e.g. time of inflow end) to change this, which would be straightforward. 
 
 The bare soil areas are represented by a two-layer model, where the upper, less-permeable  layer represents a surface crust.  With the exception of $K_{s}$, the van Genuchten parameters are the same between vegetated and bare cells. In the bare soil areas, $K_{s}$ of the lower soil layer is  equal to that in the vegetated patches (See schematic).
 The van Genuchten parameters and vertical structure of the soil can be modified in \code{input\_phi.py}.
@@ -943,8 +952,7 @@ Example Python scripts are provided to generate the Fortran input files, execute
  \code{call\_dry.py}  is a control script which writes the Fortan input files, compiles and executes the Fortran code dry.for, and reads the output files.
 
  
-
-\subsection{To write Fortran input files: \code{sim\_input.py}}
+\subsection{\code{sim\_input.py} writes Fortran input files}
 
 \code{sim\_input.py} reads and interprets the parameter file \code{params.json} located in the simulation folder \code{sim\_name}.   See Appendix B for examples of the Fortran input files.
  \code{sim\_input} specifies default parameters where no parameters are provided in \code{params.json}. For example, if \code{ncol} is not provided, an aspect ratio must be included instead (\code{aspect}).
@@ -957,36 +965,7 @@ Example Python scripts are provided to generate the Fortran input files, execute
 	\item \end{itemize}
 
 
-
-
-Note on the inflow boundary condition:  If the upslope boundary is a fixed flux boundary, \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. The code would need to be modified with the addition of a new variable (e.g. time of inflow end) to change this, which would be straightforward.
-
-\subsection{To compile and execute \code{dry.f}: \code{read\_sim})}
-\subsection{To read the Fortran output files: \code{read\_sim})}
-
-Output files are read by Python script \code{batch\_read.py}, using functions from \code{output\_dry.py}. 
-
-The Python function \code{get\_h} in \code{output\_dry.py} reads \code{h.out} and returns:
-\code{h,u,v,inflVmap,xflux0,yflux0,xflux1,yflux1}, all with dimensions: \code{nprt x ncol x nrow}.  
-Units are:
-\begin{itemize}
-	\item \code{h} : m
-	\item \code{u, v} : m/s
-	\item \code{inflVmap} : cm m$^2$ (converted from m$^2$ )
-	\item \code{xflux0, yflux0, xflux1, yflux1} : cm m$^2$ (converted from m$^2$ )
-	       \subitem fluxes are positive directed out of the domain.
-\end{itemize}
-
-
- \code{zinflc}: infiltration depth in cm
-
-
-
-%Either or inputs: \code{s\_scale} or \code{KsB}.  
-%If \code{KsB} not in params.json, use \code{KsB = KsV/s\_scale}. 
-%Default \code{s\_scale = 100.	}
-
-\subsubsection*{General parameters}
+\subsection{Parameters specified in \code{params.json} }
 \subsubsection*{SVE parameters}
 \begin{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%  Grid setup. %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1027,28 +1006,51 @@ Units are:
 	\item \code{H\_i} : initial $H$ at the surface.  The soil is initialized to an equilibrium profile (this can be modified in \code{sim\_input.py}.
 \end{itemize}
 
-
-
 \begin{itemize}
 	\item \code{tr} : storm duration (min)
 	\item \code{p} : rain intensity (cm/hr)
 	\item \code{rain} : rain intensity (mm/s)
-	\item \code{isvegc} : veg field (1 for permeable areas, 0 for impermeable)
 \end{itemize}
-%- KsV : Ksat of permeable (vegetated) areas  (cm/hr)
-%- ksatV : Ksat of permeable (vegetated) areas  (cm/s)
-%- KsB : Ksat of impermeable  (impermeable) areas (cm/hr)
-%- ksatB :Ksat of impermeable  (impermeable) areas (cm/s)
+
+
+\subsection{\code{runmodel}: compiles and execute \code{dry.f}}
+
+The function \code{runmodel} is located in \code{call\_dry.py}.  
+
+\subsection{\code{read\_sim}: reads the Fortran output files: }
+
+Output files are read by Python script \code{batch\_read.py}, using functions from \code{output\_dry.py}. 
+
+The Python function \code{get\_h} in \code{output\_dry.py} reads \code{h.out} and returns:
+primitive variables \code{h,u,v}, infiltration  \code{inflVmap} and the inter-cell fluxes \code{xflux0,yflux0,xflux1,yflux1}, all with dimensions: \code{nprt x ncol x nrow}.  
+Units are:
+\begin{itemize}
+	\item \code{h} : m
+	\item \code{u, v} : m/s
+	\item \code{inflVmap} : cm m$^2$ (converted from m$^2$ )
+	\item \code{xflux0, yflux0, xflux1, yflux1} : cm m$^2$ (converted from m$^2$ )
+	       \subitem fluxes are positive directed out of the domain.
+\end{itemize}
+
+
+ \code{zinflc}: infiltration depth in cm
 
 
 
+%Either or inputs: \code{s\_scale} or \code{KsB}.  
+%If \code{KsB} not in params.json, use \code{KsB = KsV/s\_scale}. 
+%Default \code{s\_scale = 100.	}
+
+
+
+\section{Examples}
+\subsection{example\_2by2} is provided to illustrate the grid set-up (see Appendix).
+\subsection{example\_inflow} illustrates a subcritical inflow boundary at the top of the hillslope, with rain = 0 and $K_s=0$.
 
 	
-\section{Template iPython notebook files}	
+\section{Other iPython notebook files}	
 
-Template notebooks:
 \begin{itemize}
-	\item notebooks to read the output of the SVE-R model 
 	\item GW :  stand alone implementations, and code to compare to SVE-R model output.
 	\item  Richards equation : stand alon, basic and module versions
 	\item  Code to compare simulation output to the kinematic wave approximations --> related to friction sims.
@@ -1115,33 +1117,33 @@ The stand-alone 1D Richards equation solver is structured as a class \code{Richa
 
 
 
-\section{Appendix A: \code{dry.f} parameters and variables }
+%\section{Appendix A: \code{dry.f} parameters and variables }
 
-\subsection{Source subroutine variables}
-
-\begin{itemize}
-	\item \code{isetflux} (common) specifies the boundary condition for the Richards equation solver.  \\[.2cm]
-	 \code{isetflux} = 1 if the surface flux is specified: \code{flux = 0} in case 3 (no rain and no ponding), and \code{flux = prate} in case 2 (rain and no ponding).\\[.2cm]
-	 \code{isetflux} = 0 if the surface H is specified (Dirichlet). If there is ponding (case 4), the surface boundary condition is $H$=$h$. 
-	\item \code{flux} is the surface flux (cm/s).  \code{flux} is a common variable defined in \code{source}, and used by \code{timestep}  if \code{isetflux=1}. 
-
-	\item \code{htop}: Upper boundary condition for fixed $H$ boundary condition (\code{isetflux=1}).
-
-	\item \code{PI} Potential infiltration, computed by the \code{potential} subroutine.
-
-	\item \code{depth, udum, vdum} : $h$, $U$, $V$ at grid cell \code{j,k}.
-		\subitem  \code{hp(j,k),up(j,k),vp(j,k)} if called from the corrector step.
-		\subitem  \code{h(j,k),u(j,k),v(j,k)} if called from the predictor step.	
-	\item \code{lstep} indicates from which sstep the source subroutine was called.
-		\subitem  \code{lstep} = 0 if called from the predictor step
-		\subitem  \code{lstep} = 1 if called from the corrector step. \\[.2cm]	
-		Infiltration is only updated depth in corrector step.
-		
-	\item \code{zold, znew}	: depth in cm  \\[.2cm]
-	 Richards solver units are in cm, whereas SVE-R solver units are in m)
-	\item \code{fm, feta, falpha}: roughness parameters $m$, $\eta$, and $\alpha$.
-\end{itemize}
-
+%\subsection{Source subroutine variables}
+%
+%\begin{itemize}
+%	\item \code{isetflux} (common) specifies the boundary condition for the Richards equation solver.  \\[.2cm]
+%	 \code{isetflux} = 1 if the surface flux is specified: \code{flux = 0} in case 3 (no rain and no ponding), and \code{flux = prate} in case 2 (rain and no ponding).\\[.2cm]
+%	 \code{isetflux} = 0 if the surface H is specified (Dirichlet). If there is ponding (case 4), the surface boundary condition is $H$=$h$. 
+%	\item \code{flux} is the surface flux (cm/s).  \code{flux} is a common variable defined in \code{source}, and used by \code{timestep}  if \code{isetflux=1}. 
+%
+%	\item \code{htop}: Upper boundary condition for fixed $H$ boundary condition (\code{isetflux=1}).
+%
+%	\item \code{PI} Potential infiltration, computed by the \code{potential} subroutine.
+%
+%	\item \code{depth, udum, vdum} : $h$, $U$, $V$ at grid cell \code{j,k}.
+%		\subitem  \code{hp(j,k),up(j,k),vp(j,k)} if called from the corrector step.
+%		\subitem  \code{h(j,k),u(j,k),v(j,k)} if called from the predictor step.	
+%	\item \code{lstep} indicates from which sstep the source subroutine was called.
+%		\subitem  \code{lstep} = 0 if called from the predictor step
+%		\subitem  \code{lstep} = 1 if called from the corrector step. \\[.2cm]	
+%		Infiltration is only updated depth in corrector step.
+%		
+%	\item \code{zold, znew}	: depth in cm  \\[.2cm]
+%	 Richards solver units are in cm, whereas SVE-R solver units are in m)
+%	\item \code{fm, feta, falpha}: roughness parameters $m$, $\eta$, and $\alpha$.
+%\end{itemize}
+%
 
 \section*{Appendix B:  dry.f input files}
 
@@ -1232,8 +1234,31 @@ In the first row, the first value specifies the number of nodes (\code{npt}), an
 2.0      2.0      0.04
 \end{verbatim}
 
+\subsection{vanG.dat}
 
-\subsection{coords.dat}
+Specifies the soil dimensions and van Genuchten parameters.  See example below from 
+The first two rows specify the soil depth (\code{zmax}) and soil layer thickness (\code{dz}), and the second two rows specify the number of soil grid points (soil layers + 1).  
+%Finally, $L$ is ... 
+Following this, the van Genuchten parameters for each soil layer in a vegetated cell, in order of decreasing soil depth (the last row is the top of the soil column). Note that all vegetated cells are initialized with the same parameters.
+From left to right, the columns are: 
+	\code{alpha},\code{theta\_s},\code{theta\_r}, \code{lambda}, \code{ksat}, \code{h\_init}.  This format is repeated for the bare soil cells.  
+	
+\begin{verbatim}
+dz zmax 
+1.0           20             
+nz 
+21             
+L 
+0.5            
+ vegetated cells  
+0.0096 0.472 0.0378 0.47 0.000555555555556 -320.0 
+0.0096 0.472 0.0378 0.47 0.000555555555556 -321.0
+....
+ bare soil cells 
+0.0096 0.472 0.0378 0.47 0.000555555555556 -320.0 
+0.0096 0.472 0.0378 0.47 5.55555555556e-05 -321.0 
+\end{verbatim}
+
 
 \section*{Appendix C : \code{dry.f} pseudocode}
 
@@ -1544,7 +1569,10 @@ Pseudocode for subroutine \code{timestep}:
 
 \end{lstlisting}
 
-
+%\section{Variable index}
+%
+%\code{isvegc} : veg field (1 for permeable areas, 0 for impermeable) 
+%
 \bibliography{citations}
 
 \end{document}
