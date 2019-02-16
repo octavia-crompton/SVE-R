@@ -11,8 +11,12 @@ dry.inc  : specifies common variables for dry.for
 Python files:
 wrapper scripts:
 * call\_dry.py
-   * sim_input.py
-	 * sim_read.py
+   * sim\_input.py
+         * input\_phi.py
+         * input\_veg.py
+         * input\_coords.py
+         * input\_boundary.py
+   * sim\_read.py
 
 
 Other:
