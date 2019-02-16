@@ -6,7 +6,6 @@ from scipy import ndimage
 from scipy.ndimage import convolve
 import pandas as pd
 import matplotlib.colors as colors
-
 import cmocean
 
 import warnings
@@ -34,7 +33,12 @@ lines = ["s","o","d","<"]
 linecycler = cycle(lines)
 
 def veg_points(isvegc, dx = 1.0, veg_size = 10, ax = '', c = 'g'):
-    
+    """
+    input:
+        isvegc: binary array of vegetation field
+    output:
+        scatter plot of vegetated points
+    """
     ncol = isvegc.shape[0]
     nrow = isvegc.shape[1]
     xc = np.arange(0, ncol*dx, dx)  + dx/2
@@ -63,7 +67,7 @@ def veg_points(isvegc, dx = 1.0, veg_size = 10, ax = '', c = 'g'):
     
         
     
-def color_topo(zc, dx = 1.0, veg_size = 10., ax = ''):
+def color_topo(zc, dx = 1.0, ax = ''):
     
     ncol = zc.shape[0]
     nrow = zc.shape[1]
@@ -103,7 +107,8 @@ def plot_c(r, dx = 1, ax  = ''):
 
     import cv2
     thresh = r.astype(np.uint8)
-    image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+        cv2.CHAIN_APPROX_NONE)
     if ax == '':     
         fig, ax = plt.subplots()
 
@@ -118,7 +123,8 @@ def plot_c_inv(r, dx = 1, ax  = ''):
 
     import cv2
     thresh = 1- r.astype(np.uint8)
-    image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+        cv2.CHAIN_APPROX_NONE)
     if ax == '':     
         fig, ax = plt.subplots()
 
@@ -133,11 +139,10 @@ def colormap(df, array,  ax = '',
              colorbar = True, veg_scale = False,
              bounds = '', clabel = '',
              cmin = False, cmax = False,           
-             veg_size = 2, plot_veg = False,
-             cround = '',cfontsize = 20,
+             cround = '',cfontsize = 14,
              cmap = cmocean.cm.deep):
 
-    
+
     isvegc = df['isvegc'].astype(float)
     dx = df['dx']
     
@@ -187,8 +192,6 @@ def colormap(df, array,  ax = '',
             
         if np.nanstd(array) < 1e-5:
             bounds = np.linspace(cmin-1, cmax+1, 10)
-        
-
 
     norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)    
 
@@ -208,46 +211,11 @@ def colormap(df, array,  ax = '',
       cbh.set_label(clabel, fontsize = cfontsize)
       cbh.ax.tick_params(labelsize=cfontsize) 
       
-    if plot_veg == True:
-      vegplot = plt.scatter(xc+df.dx/2., yc+df.dx/2.,
-                          s = isvegc*veg_size,
-                          c = 'g',                        
-                          marker='o', alpha = 0.75)
 
 
     ax.set_ylim(yc.min(), yc.max())
     ax.set_xlim(xc.min(), xc.max())
     ax.set_xticks([], []);
     ax.set_yticks([], []);
-    
+
     return zinflplot
-                                                                       
-
-# code snippets, stuctured as functions
-def place_AB():
-    """
-    snippet to place As and Bs in figures 
-    """
-    for i, label in enumerate(('A', 'B')):
-        ax = plt.subplot(1,2,i+1)
-        ax.text(-0.05, 1.15, label, transform=ax.transAxes,
-          fontsize=16, fontweight='bold', va='top')
-
-def add_single_colorbar():
-    """
-    place colorbar when there are multiple subplots
-    """
-    cbaxes = fig.add_axes([.92, 0.13, 0.02, 0.75]) 
-    cb = plt.colorbar(zinflplot, cax = cbaxes) 
-    cb.set_label('cm', fontsize = 14)
-    
-def plae_legend(ax):
-    """ 
-    place the legend outside of the plot
-    """
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), title = 'time (min)')
-        
-# to save a figure
-# plt.savefig('{0}/fig.png'.format(path),bbox_inches='tight')
-        
-    

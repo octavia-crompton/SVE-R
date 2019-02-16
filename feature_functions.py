@@ -9,7 +9,7 @@ def RF_patterns(isveg, rvl_params):
     """
     inputs:
       isveg: binary array of vegetation 
-      rvl_params
+      rvl_params: dictionary of parameters specifying how features are computed.
 
     output: 
       pattern_dict: a dictionary of feature maps, each with shape (ncol x nrow)
@@ -114,6 +114,10 @@ def RF_patterns(isveg, rvl_params):
 
 
 def smoothB(U, isvegc, gsigma):
+    """
+    Smooths over vegetated cells (1s) with a Gaussian filter,
+      ignoring bare soil cells (0s)
+    """    
     U = U.astype(float)
     U[isvegc == 1] = np.nan
     V=U.copy()
@@ -132,7 +136,15 @@ def smoothB(U, isvegc, gsigma):
 
 def smoothV(U, isvegc, gsigma):
     """
-    smooths over V
+    Smooths array U over vegetated cells with a Gaussian filter,
+      ignoring bare soil cells 
+
+    Inputs: 
+        U : array to smooth over
+        isvegc : vegetated cells
+
+    Outputs:
+        
     """
     U = U.astype(float)
     U[isvegc == 0] = np.nan
@@ -149,9 +161,6 @@ def smoothV(U, isvegc, gsigma):
     Z[isvegc ==0] = 0
     return Z
 
-    
-
-    
 
 def func_d2B(isvegc, saturate):
     """
@@ -197,9 +206,7 @@ def func_d2V(isvegc, saturate):
     res[res>saturate] =  saturate    
     
     return res
-        
 
-    
 def func_d2uB(isvegc, edge, saturate):
     """
     Distane to nearest upslope bare cell
@@ -514,46 +521,3 @@ def upslope_memory(isvegc,  memory = 3):
         dum[:, -k] = isvegc[:, -k:].sum(1)
     # dum[isvegc == 0] = 0
     return dum
-    
-def func_d2wB(isvegc, saturate, weight):
-    """
-    Distane to weighted nearest upslope bare cell
-    =  0 for bare ground
-    =  1 for veg cells with a neighboring bare cell upslope
-    >  1 for veg cells with bare cells further upslope
-    """
-    ncol = isvegc.shape[0]
-    nrow = isvegc.shape[1]
-    
-    res =  isvegc.copy()
-    
-    for i in range(nrow):
-        d = isvegc.copy()
-        d[:,:i+1] = 1
-        res[:,i] = ndimage.distance_transform_edt(d, sampling = (weight, 1))[:, i]   
-    res[isvegc ==0] = 0
-    
-    res[res>saturate] = saturate   
-    return res
-
-
-def func_d2wV(isvegc, saturate, weight):
-    """
-    Distane to weighted nearest upslope bare cell
-    =  0 for bare ground
-    =  1 for veg cells with a neighboring bare cell upslope
-    >  1 for veg cells with bare cells further upslope
-    """
-    ncol = isvegc.shape[0]
-    nrow = isvegc.shape[1]
-    
-    res =  isvegc.copy()
-    
-    for i in range(nrow):
-        d = 1-isvegc.copy()
-        d[:,:i+1] = 1
-        res[:,i] = ndimage.distance_transform_edt(d, sampling = (weight, 1))[:, i]   
-    res[isvegc ==1] = 0
-    
-    res[res>saturate] = saturate   
-    return res    

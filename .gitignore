@@ -1,6 +1,7 @@
 .dropbox
 .DS_Store
 .ipynb_checkpoints
+.gitignore
 Icon?
 *.pklz
 */output
