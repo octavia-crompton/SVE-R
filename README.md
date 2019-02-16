@@ -10,9 +10,11 @@ dry.inc  : specifies common variables for dry.for
 
 Python files:
 wrapper scripts:
-- call\_dry.py
-  - 
-	- 
+* call\_dry.py
+   * sim_input.py
+	 * sim_read.py
+
+
 Other:
 - plot\_functions.py  : provides ipython notebook functionality
 
