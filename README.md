@@ -12,10 +12,10 @@ Python files:
 wrapper scripts:
 * call\_dry.py
    * sim\_input.py
-         * input\_phi.py
-         * input\_veg.py
-         * input\_coords.py
-         * input\_boundary.py
+      * input\_phi.py
+      * input\_veg.py
+      * input\_coords.py
+      * input\_boundary.py
    * sim\_read.py
 
 
