@@ -39,18 +39,13 @@ def main(argv):
 def sim_input(path):
     """
     tasks:  
-      copy or write the fortran input files.
+      write the Fortran input files.
         includes: 
-          coords.dat  (ncol, nrow, slope, topo, dx)
-          nodes.dat  (ncol, nrow) 
-          veg.dat  (ncol, nrow, fV) 
-          boundary.dat  (ncol, nrow, boundary types)   
-          vanG.dat 
-    
-        uses if/else syntax:
-          if: file exists in template directory and overwrite == 0
-          else: write files, and save a version to the template directory 
-        
+          coords.dat  
+          nodes.dat
+          veg.dat
+          boundary.dat
+          vanG.dat
       
     copy source code (dry.for, dry.inc)    
     
@@ -65,21 +60,20 @@ def sim_input(path):
     for key,val in params.items():
             exec(key + '=val')
 
+    # make input andoutput subfolders
     input_path = '/'.join([path, 'input'])
     os.system('mkdir {0}'.format(input_path))  if os.path.isdir(input_path) == False else True
-    
+
     output_path = '/'.join([path, 'output'])
     os.system('mkdir {0}'.format(output_path))  if os.path.isdir(output_path) == False else True
-        
+
+    #
     if vegtype == 'randv':
         
         isveg = wrap_veg(path + '/input', params)                          
 
     elif vegtype == 'stripes':
-      
-      if "veg.dat" not in os.listdir(veg_path):  
-        wrap_stripe_veg(veg_path, params)
-    
+
       isveg = wrap_stripe_veg(path + '/input', params)
 
     elif vegtype == 'image':
@@ -105,7 +99,7 @@ def sim_input(path):
     nop = write_nodes(input_path, ncol, nrow)  
 
     write_boundary(input_path, params)
-    # dump track points
+    # sae track points
     for key,val in track_points.items():
             exec(key + '=val') 
     
@@ -161,7 +155,7 @@ def sim_input(path):
 
     write_phi(input_path,phi_veg,phi_bare, H_init, dz, zmax)          
 
-    # modify dry1.inc and copy it to path as dry.inc
+    # modify dry.inc and copy it to path as dry.inc
     write_inc(path, params)  
 
     # copy the model to the new folder
@@ -210,7 +204,7 @@ def write_inc(path, params):
     nz =  int(zmax/dz)+ 1
     ncol = params['ncol']    
     nrow = params['nrow']    
-    with open('dry1.inc', 'r') as input_file: 
+    with open('dry.inc', 'r') as input_file: 
       with open('{0}/dry.inc'.format(path), 'w') as output_file:
         for line in input_file:
             if line[6:15] == 'parameter':

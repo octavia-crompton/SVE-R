@@ -1,53 +1,42 @@
       program swe2d
 C======================================================================
-C  SVE (Saint Venant) Compontent
-C.   time variables:
-C         t :  time, ranges from 0 to tmax, updated at start of time step
-C         nt :   number of time steps   (ntp>nt)        
-C         it   : iteration number  
-C         dt   : time increment
-C         itp  : print iteration
-C         tmax : simulation final time
-C         tp  :  time of ponding (printed in console)
-C         nprt : print frequency : SVE output is saved every nprt timesteps, 
+C  Code for a coupled 2D Saint Venant Equation (SVE)- 1D Richards equation model.
+C    See documentation for further information.
+C    This code requires a separate file, "dry.inc", to specify the common variables.
+ 
+C    Notes on timesteps:
+C 	 The SVE and Richards equation are solved with different timesteps, 
+C    because the SVE require small timesteps for stability and the Richards equation 
+C    solver is more time intensive.  The time variables are briefly summarized below. 
+C    Where variable names differ from the companion Python wrapper scripts, the Python 
+C    names are noted in parentheses.
+C
+C         t    :  time (s), ranging from 0 to tmax
+C         tmax :  simulation maximum time
+C         dt   :  SVE time step (python: dt_sw)
+C         nt   :  number of SVE time steps  (tmax/dt) 
+C         ntp  :  space allocated for the time grid (see dry.inc), ntp>nt
+C         it   :  iteration number = t/dt
+C         dtinfl :  infiltration time step (python: dt_r)
+C         iscale :  ratio of Richards equation to SVE timesteps (dt/dt_sw)
+C         dt_p :  "print" timestep (s), specifying how often to save variables
+C                  to output files
+C         nprt :  print frequency : SVE output is saved every nprt timesteps, 
 C               where nprt = dt_p/dt
-C    Richards Parameters: 
-C       nz:   number of soil layers
 C
-C     Common variables for putting infiltration on a new time grid:
-C         iscale :  scale factor for shallow water to infiltration time steps  (probably 10)
-C         dtinfl :  infiltration time step  (dt in python notebook)
+C       Rainfall parameters: 
+C         prate  (m/s) :   rainfall rate  m/s
+C         tr     (s)   :   time when rain stops (s)
 C
-C       Precipitation variables: 
-C         prate(nt)   :  m/s
-C         tr   : time when rain stops
-C       
-C
-C     Common SW variables:
-C        grav  : acceleration due to gravity.
-C        epsh : depth tolerence for dry bed problems.  in m
-C        xni, xnv  :  Manning bed roughness coefficients (interspace and veg)
-C
-C        inum  : number of boundary faces in a boundary cell.
-C        ipos  : orientation of boundary face:=1 bottom:=2 right:=3 top:=4 left.
-C        nbcell : number of boundary cells.
-C   
-C    Common variables for infiltration
-C        flux :  defined in source subroutine, used by timestep subroutine
-C                 if isetflux=1, set flux (in cm/s)
-C
-C    Non-common infiltration variables:
-C        PI  m/s
-C        prate(nt)  cm/s
-C     
-C   Notes:  Richards solver is called in the corrector step.
+C     Common variables:
+C        grav  : acceleration due to gravity (m/s2)
+C        epsh : depth tolerence for dry bed problems (m)
+
+C   Notes (move to source?):  Richards solver is called in the corrector step.
 C           source subroutine sets i (infiltration) for the current and following 
-C           iscale timesteps, via qs.
+C           iscale timesteps.
 C           Once h --> 0, winflt is set to zero.
 C
-C     Flux variables:
-C         f(j,k,,) : m2/s
-C         xflux0, xflux1, yflux0, yflux1:  m3
 ************************************************************************
       include 'dry.inc'    
       

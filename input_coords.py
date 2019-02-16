@@ -3,20 +3,20 @@ import scipy as sp
 import os, sys
 import gzip, pickle
 
-
 def wrap_coords(path,params):
     """
-    
     inputs: 
-      path: path to save coords.dat
-      ncol: across slope number of cells
-      nrow: along slope number of cells
-      dx: grid cell width
-      So : slope, m/m (not in percent)
-      seed : random seed
+      path: path to save input files
+      params : dictionary with parameters, including: 
+          topo: topography case
+          ncol: across slope number of cells
+          nrow: along slope number of cells
+          dx: grid cell width
+          So : slope, m/m (not in percent)
     
     1. call build_coords  --> x,y,z values at nodes
-    2. call write_coords --> write to coords.dat                
+    2. call write_coords --> write to coords.dat  
+    3. call cc_coords --> save cell-center coordinates to coords.pklz (for python)
     """   
     
     ncol = params['ncol']
@@ -24,7 +24,7 @@ def wrap_coords(path,params):
     dx = params['dx']  
     
     nop = write_nodes(path, ncol, nrow)  
-    x, y, z  = build_coords(params)                                 
+    x, y, z  = build_coords(params)
     write_coords(path, ncol, nrow, dx, x, y, z)
     cc_coords(path, ncol, nrow, nop, x, y, z, dx)
   
@@ -59,7 +59,7 @@ def build_coords(params):
     creates x,y,z coordinates, called by wrap_coords
                 
     input: 
-      params : dictionary which contains keys:
+      params : dictionary with parameters, including:
           ncol, nrow, dx, slope, 
           topo (topography case)
     
@@ -67,16 +67,12 @@ def build_coords(params):
       xdum: [ncol+1, nrow+1] , x at nodes
       ydum: [ncol+1, nrow+1] , y at nodes
       zdum: [ncol+1, nrow+1] , z at nodes
-                
-                
     """
     for key,val in params.items():
             exec(key + '=val')
         
-
     if 'plane' in topo:
-        
-        # contruct the grid from ncol and nrow
+        # construct grid
         x = np.arange(0, (ncol+1)*dx - 1e-10, dx )
         y = np.arange(0, (nrow+1)*dx - 1e-10, dx )
         y, x = np.meshgrid(y, x)
@@ -85,8 +81,8 @@ def build_coords(params):
         zrow =  np.linspace(0,zymax, nrow+1)
         z = np.tile(zrow, [ncol+1]).reshape([ncol+1, nrow+1])
     
-    
     elif 'nonplane' in topo:
+        # example non-planar topography
         omega = 0.0001
         Ly = nrow*dx
         H = Ly*So
@@ -105,13 +101,10 @@ def build_coords(params):
 def write_coords(path, ncol, nrow, dx, x, y, z):        
     
     """
-    function does 2 things:
-      1. write nodes and x,y,z,veg coords to coords.dat
-      2. smooth x,y,z to cell centers    
+     writes x,y,z coordinates to coords.dat
     """
     npt = (ncol+1)*(nrow+1)  # number of points
-    ne = nrow*ncol  # number of edges
-    nbcell = 2*ncol + 2*nrow - 4  # number of boundary cells
+    ne = nrow*ncol           # number of edges
     
     fname = '{0}/coords.dat'.format(path)
     f = open(fname, 'w')
@@ -128,7 +121,6 @@ def write_nodes(path, ncol, nrow):
     write cell node indices to nodes.dat
     """
     npt = (ncol+1)*(nrow+1)  # number of points    
-    # (ncol) by (nrow)  -  node numbers
     nodes = np.arange(1, npt+1, dtype = int).reshape([ncol+1, nrow+1])
 
     nop = np.zeros([ncol, nrow, 4], dtype = int)
@@ -152,10 +144,9 @@ def write_nodes(path, ncol, nrow):
     return nop
 
 def interp2nodes(ncol,nrow, nop, x):
+    """ 
+    interpolates values of array x from nodes to cell centers
     """
-    
-    """
-    # get cell center values:
     xcc  = np.zeros([ncol, nrow])    
 
     for j in range(ncol):

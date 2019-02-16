@@ -1193,6 +1193,8 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
 Sample \code{boundary.dat} for the 2x2 grid example, for which every cell is a boundary cell. 
 The array on lines 3-7 show the (j,k) indices for each boundary cell, the number of boundaries associated with that cell, and boundary type of each boundary cell.
 
+\code{inum}  is the number of boundary faces in a boundary cell,
+and   \code{ipos} is the orientation of boundary face: (bottom:1, right2, top:3, left:4).
 
 \begin{verbatim}
 number of boundary cell 

@@ -1,7 +1,6 @@
 #==============================================================================
-# Main file for creating vegetation pattern and writing input/veg.dat
+# functions for creating vegetation pattern and writing input/veg.dat
 #==============================================================================
-
 import numpy as np
 import scipy as sp
 import os, sys
@@ -12,9 +11,10 @@ from skimage import io, color
 import imageio
 from scipy.interpolate import RegularGridInterpolator    
 import matplotlib.pylab as plt
+
 def wrap_veg(path, params):
     """
-    This wrapper function is called if vegtype==randv.  It calls make_randv() to 
+    This function is called if vegtype==randv.  It calls make_randv() to 
     create a random vegetation field, write_veg() to write input/veg.dat, 
     and get_points() to select two points for which the soil moisture profiles will be saved.
     
@@ -108,7 +108,7 @@ def wrap_image_veg(path, params):
 def wrap_stripe_veg(path, params):
     """
     Creates a vegetation field of horizonal stripes with randomly-selected
-     widths and spacings, determined by fractional cover and sigma
+     widths and spacings, determined by fractional cover and sigma_x
 
     args: 
       path: path to save coords.dat
@@ -119,7 +119,7 @@ def wrap_stripe_veg(path, params):
     ncol = params['ncol']
     nrow = params['nrow']    
     fV = params['fV']        
-    sigma = params['sigma']    
+    sigma = params['sigma_x']    
     seed = params['seed']
     
     np.random.seed(seed) 
