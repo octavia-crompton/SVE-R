@@ -348,19 +348,38 @@ The model components are coupled at each grid cell in two steps: the depth from 
  \end{figure}	
 
 
+\newpage
 
 \section{SVE-R model Fortran code}
 \label{SVE_solver}
 
 \subsection{SVE-R model structure}
 
+The core of the model, \code{dry.f}, is written in Fortran, an involves a number of auxiliary files (see screenshot in Figure \ref{files}), including:
 
-The model is written in Fortran, and located in the file \code{dry.f}.
+\begin{itemize}
+	\item \code{\code{dry.inc}} : specifies common variables used by \code{dry.f}  (a number of variables are ``common" variables, and not explicitly returned by the Fortran subroutines). 
+	\item \code{input} :  files to initialize \code{dry.f} are located in this folder
+	\item \code{output} : \code{dry.f} saves the outputs to this \code{output} folder.	
+	\item  \code{.ipynb} files: python notebooks to visualize the simulation outputs.
+	\item \code{params.json} : a used supplied parameter dictionary
+	\item \code{sw} : the compiled Fortran executable.
+\end{itemize}
+ 
 
-
-Figure \ref{summary} summarizes the structure of \code{dry.f} (see Appendix C for a pseudocode summary).
 
  \begin{figure}[h]
+ \centering
+\includegraphics[width=20pc]{grid/files.png}
+ \caption{Summary of the file structure associated with \code{dry.f}.}
+ \label{files}
+ \end{figure}
+
+
+Figure \ref{summary} summarizes the workflow of \code{dry.f}, which can be divided into main two steps: (1) initializing and (2) running the model.   The following subsections describe \code{dry.f} components in greater detail.
+
+
+\begin{figure}[h]
  \centering
 \includegraphics[width=30pc]{grid/summary.png}
  \caption{Summary of the SVE-R model structure in \code{dry.f}.}
@@ -368,24 +387,12 @@ Figure \ref{summary} summarizes the structure of \code{dry.f} (see Appendix C fo
  \end{figure}
 
 
-\code{dry.f} is initialized with files located in the input folder, and saves all outputs to the output folder.  
-Common variables are specified in \code{dry.inc} (a number of variables are ``common" variables, and not explicitly returned by the Fortran subroutines). 
-
-
 \subsection{Initializing the SVE solver}
 \label{SVEinit}
 	
-The \code{init} subroutine initializes the SVE component of the model,  which involves reading a number of scalar parameters from  \code{params.dat} (see Appendix B) and setting up the grid.
- The infiltration and parameters  are initialized in the subroutine \code{initVG}).  The following subsections  include all of the input files, and further details about each input file.  The grid-specific input files are illustrated for a 2$\times$2 grid, where the boundaries are:   a fixed-flux subcritical boundary at the top of the hill, closed/wall lateral boundaries, and an open boundary at the bottom of the hill. Figure \ref{grid2by2} introduces the 2x2 grid used to explain the grid set-up.  Note that, while the SVE-R model Fortran code does not assume a  rectangular grid, the provided Python code and sample input files do assume a rectangular grid. 
- 	
- 	
- \begin{figure}[h]
- \centering
-\includegraphics[width=15pc]{grid/grid2by2.png}
- \caption{Summary of the SVE-R model structure.}
- \label{grid2by2}
- \end{figure}
-
+The \code{init} subroutine initializes the SVE component of the model,  which involves reading a number of scalar parameters from  \code{params.dat} and setting up the grid.
+ The infiltration and parameters  are initialized in the subroutine \code{initVG}.  The following briefly describes the input files, and further details are included in Appendix (including an illustrative example of a  2$\times$2 grid)
+  
 \subsubsection*{Input files}
 \begin{itemize}
 
@@ -1145,9 +1152,11 @@ The stand-alone 1D Richards equation solver is structured as a class \code{Richa
 %\end{itemize}
 %
 
-\section*{Appendix B:  dry.f input files}
+\section*{Appendix B: A 2$\times$2 grid example}
 
-Example input files are included here for the 2x2 grid example, to illustrate.  Figure \ref{2by2} shows the cell center and node indices for the example grid, and Figure \ref{2by2boundary} shows the boundaries. 
+
+To illustrate the grid set-up, example input files are included here for the 2x2 grid example.  Note that while the SVE-R model Fortran code does not assume a  rectangular grid, the provided Python code and sample input files do assume a rectangular grid. 
+ Figure \ref{2by2} shows the cell center and node indices for the example grid, and Figure \ref{2by2boundary} shows the boundaries, which are a fixed-flux subcritical boundary at the top of the hill, closed/wall lateral boundaries, and an open boundary at the bottom of the hill.
 
 
  \begin{figure}[h]
