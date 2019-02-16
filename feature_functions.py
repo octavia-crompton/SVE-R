@@ -146,9 +146,16 @@ def get_feature_matrix(sim, rvl_params, target = None):
     
 def smoothB(U, isvegc, gsigma):
     """
-    Smooths over vegetated cells (1s) with a Gaussian filter,
-      ignoring bare soil cells (0s)
-    """    
+    Smooths array U over bare soil cells with a Gaussian filter,
+      ignoring vegetated cells 
+
+    Inputs: 
+        U : array to smooth over
+        isvegc : vegetated cells
+        gsigma : standard deviation of the Gaussian kernel, determining length scale of smoothing
+    Outputs:
+        Z : array containing U smoothed over the bare soil cells (ignoring vegetated)
+    """   
     U = U.astype(float)
     U[isvegc == 1] = np.nan
     V=U.copy()
@@ -175,7 +182,7 @@ def smoothV(U, isvegc, gsigma):
         isvegc : vegetated cells
         gsigma : standard deviation of the Gaussian kernel, determining length scale of smoothing
     Outputs:
-        
+        Z : array containing U smoothed over the vegetated cells
     """
     U = U.astype(float)
     U[isvegc == 0] = np.nan
@@ -193,59 +200,17 @@ def smoothV(U, isvegc, gsigma):
     return Z
 
 
-def func_d2B(isvegc, saturate):
-    """
-    Distane to  nearest upslope bare cell
-    =  0 for bare ground
-    =  1 for veg cells with a neighboring bare cell upslope
-    >  1 for veg cells with bare cells further upslope
-    """
-    ncol = isvegc.shape[0]
-    nrow = isvegc.shape[1]
-
-    res =  isvegc.copy()
-    
-    for i in range(nrow):
-        d = isvegc.copy()
-        d[:,:i+1] = 1
-        res[:,i] = ndimage.distance_transform_edt(d, sampling = (1, 1))[:, i]   
-    
-    res[isvegc ==0] = 0
-    res[res>saturate] =  saturate    
-    
-    return res
-    
-    
-def func_d2V(isvegc, saturate):
-    """
-    Distane to  nearest upslope bare cell
-    =  0 for bare ground
-    =  1 for veg cells with a neighboring bare cell upslope
-    >  1 for veg cells with bare cells further upslope
-    """
-    ncol = isvegc.shape[0]
-    nrow = isvegc.shape[1]
-
-    res =  isvegc.copy()
-    
-    for i in range(nrow):
-        d = 1-isvegc.copy()
-        d[:,:i+1] = 1
-        res[:,i] = ndimage.distance_transform_edt(d, sampling = (1, 1))[:, i]   
-    
-    res[isvegc ==1] = 0
-    res[res>saturate] =  saturate    
-    
-    return res
-
 def func_d2uB(isvegc, edge, saturate):
     """
-    Distane to nearest upslope bare cell
-    =  0 for bare ground
-    =  1 for veg cells with a neighboring bare cell upslope
-    >  1 for veg cells with bare cells further upslope
+    Computes the distance to nearest upslope bare soil cell
+    Input: 
+        isvegc: binary array of vegetation locations 
+    Returns:
+        df1 : array containing the distance to the nearest upslope bare cell
+             =  0 for bare cells
+             =  1 for veg cells with a neighboring bare cell upslope
+             >  1 for veg cells with a bare cell further upslope
     """
-
     ncol = isvegc.shape[0]
     nrow = isvegc.shape[1]
     arr = np.ones([ncol+ 2*edge, nrow + 2*edge]).T
@@ -264,11 +229,16 @@ def func_d2uB(isvegc, edge, saturate):
 
 def func_d2uV(isvegc, edge, saturate):
     """
-    Distane to nearest upslope veg cell
-    =  0 for veg cells
-    =  1 for bare cells with a neighboring veg cell upslope
-    >  1 for bare cells with a  veg cell further upslope
+    Computes the distance to nearest upslope vegetated cell
+    Input: 
+        isvegc: binary array of vegetation locations 
+    Returns:
+        df1 : array containing the distance to the nearest upslope vegetated cell
+             =  0 for vegetated cells
+             =  1 for bare cells with a neighboring veg cell upslope
+             >  1 for bare cells with a veg cell further upslope
     """
+
     ncol = isvegc.shape[0]
     nrow = isvegc.shape[1]
     arr = np.ones([ncol+ 2*edge, nrow + 2*edge]).T
@@ -286,15 +256,12 @@ def func_d2uV(isvegc, edge, saturate):
 
 def func_d2dB(isvegc, edge, saturate):
     """
-    input: 
-      isvegc : [ncol x nrow] array of vegetation field
-  
-    output : 
-      d2dB : [ncol x nrow] array with distance to nearest downslope bare cell
-        =  0 for bare ground
-        =  1 for veg cells with a bare cell immediately downslope
-    """    
-    
+    Computes the distance to nearest downslope bare cell
+    Input: 
+        isvegc: binary array of vegetation locations 
+    Returns:
+        df1 : array containing the distance to the nearest downslope bare cell
+    """
     ncol = isvegc.shape[0]
     nrow = isvegc.shape[1]
     
@@ -313,13 +280,11 @@ def func_d2dB(isvegc, edge, saturate):
 
 def func_d2dV(isvegc, edge, saturate):
     """
-    input: 
-      isvegc : [ncol x nrow] array of vegetation field
-
-    output : 
-      d2dV : [ncol x nrow] array of distane to nearest downslope veg cell
-        =  0 for veg cells
-        =  1 for bare cells with a bare cell immediately downslope  
+    Computes the distance to nearest downslope vegetated cell
+    Input: 
+        isvegc: binary array of vegetation locations 
+    Returns:
+        df1 : array containing the distance to the nearest downslope vegetated cell
     """
   
 
@@ -346,7 +311,7 @@ def func_d2lB(isvegc, edge, saturate):
       isvegc : [ncol x nrow] array of vegetation field
 
     output :
-      d2lB : [ncol x nrow] array of distane to nearest left bare
+      d2lB : [ncol x nrow] array of distance to nearest left bare
         =  0 for bare cells
         =  1 for veg cells with a bare cell immediately left
     """
@@ -373,7 +338,7 @@ def func_d2lV(isvegc, edge, saturate):
       isvegc : [ncol x nrow] array of vegetation field
 
     output : 
-      d2lV : [ncol x nrow] array, distane to nearest veg cell to the left
+      d2lV : [ncol x nrow] array, distance to nearest veg cell to the left
         =  0 for veg cells
         =  1 for bare cells with a veg cell immediately left  
     """
@@ -399,7 +364,7 @@ def func_d2rB(isvegc, edge, saturate):
       isvegc : [ncol x nrow] array of vegetation field
 
     output :
-      d2rB : [ncol x nrow] array;  distane to nearest bare cell to right
+      d2rB : [ncol x nrow] array;  distance to nearest bare cell to right
         =  0 for bare cells
         =  1 for veg cells with a veg cell immediately to right
     """
@@ -425,7 +390,7 @@ def func_d2rV(isvegc, edge, saturate):
       isvegc : [ncol x nrow] array of vegetation field
 
     output : 
-      d2rV : [ncol x nrow] array;  distane to nearest veg cell to right
+      d2rV : [ncol x nrow] array;  distance to nearest veg cell to right
         =  0 for veg cells
         =  1 for bare cells with a veg cell immediately to right  
     """
