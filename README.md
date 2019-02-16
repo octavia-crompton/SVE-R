@@ -21,6 +21,8 @@ wrapper scripts:
 
 Other files:
 - plot\_functions.py  : plotting functions used by ipython example notebooks
+- feature\_functions.py : python functions to convert a binary array (e.g. a vegetation map or urban landscape) into an array of features on which the random forest can operate.
+- feature\_example.ipynb : contains visualizations of the features.
 
 Examples: 
 * example\_2by2:
@@ -31,6 +33,8 @@ Examples:
 Notes:
  
 This code is provided as a supplement to the paper: "Name of Paper" (available 
- [here](http://example.com "Title").
-Impermeable and permeable areas are labeled here as bare soil and vegetated patches, respectively.
+ [here](http://example.com "Title")).
+ The terminology used in the code vs. the companion paper differ in several ways:
+First, impermeable and permeable areas are labeled here as bare soil and vegetated patches, respectively.  
+The model simulations described in the emulator paper were run in parallel, whereas the code provided here is is for a single 
 
