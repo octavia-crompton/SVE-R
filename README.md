@@ -2,7 +2,7 @@ Brief summary:
 
 The core of the SVE-R model is in dry.f, and a number of python wrapper functions are provided to facilitate its use.  The SVE-R model and python scripts are documented in detail in doc/model.pdf.
 
-Files:
+__List of files:__
 
 dry.for  : SVE-R Fortran core model
 dry.inc  : specifies common variables for dry.for
@@ -19,13 +19,18 @@ wrapper scripts:
    * sim\_read.py
 
 
-Other:
-- plot\_functions.py  : provides ipython notebook functionality
+Other files:
+- plot\_functions.py  : plotting functions used by ipython example notebooks
 
+Examples: 
+* example\_2by2:
+* example\_image:
+* example\_infl:
+* example\_rain:
 
-
-
-Notes
-
+Notes:
+ 
+This code is provided as a supplement to the paper: "Name of Paper" (available 
+ [here](http://example.com "Title").
 Impermeable and permeable areas are labeled here as bare soil and vegetated patches, respectively.
 
