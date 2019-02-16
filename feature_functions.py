@@ -9,18 +9,15 @@ def RF_patterns(isveg, rvl_params):
     """
     inputs:
       isveg: binary array of vegetation 
-      rvl_params: dictionary of parameters specifying how features are computed.
+      rvl_params: dictionary of parameters specifying how features are computed:
+         edge : "padding" added to all distances to boundaries, to reduce edge effects.
+         saturate : maximum size of elements in the feature arrays 
+         gsigma : smoothing lengthscales (in the Gaussian filter)
 
     output: 
       pattern_dict: a dictionary of feature maps, each with shape (ncol x nrow)
 
-      core vegetation features:
-          d2uB: distance to nearest upslope bare cell
-          d2dB : distance to nearest downslope bare cell  
-          d2xB : distance to nearest across-slope bare cell      
-
-    omitted: 
-     d2divide (ncol x nrow) : distance to divide
+     does not include: d2divide (ncol x nrow), the distance to divide
     """
     isvegc = np.array(isveg, dtype = float) 
     ncol = isvegc.shape[0]
@@ -53,7 +50,6 @@ def RF_patterns(isveg, rvl_params):
                   
     patchL,patchLB = get_patchL(isvegc, saturate) 
     bareL, bareLV = get_bareL(isvegc, saturate) 
-    
 
     # assemble base pattern_dict
     pattern_dict = {'isvegc' : isvegc,                                                
@@ -86,8 +82,6 @@ def RF_patterns(isveg, rvl_params):
             del pattern_dict[key] 
         
     return pattern_dict                
-
-
 
 def get_feature_matrix(sim, rvl_params, target = None):
     """
