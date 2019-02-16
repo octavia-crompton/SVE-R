@@ -514,7 +514,7 @@ def get_bareL(isvegc, saturate, skipflag = 0):
     nrow = isvegc.shape[1]
     bareLV = np.zeros(isvegc.shape, dtype = float)  # veg patch length
     bareL = np.zeros(isvegc.shape, dtype = float)  # upslope interspace patch length (paired to veg patch)
-    
+
     for i in range(ncol):  # loop over across-slope direction first
         count = 0           
         for j in range(nrow):    
@@ -522,7 +522,7 @@ def get_bareL(isvegc, saturate, skipflag = 0):
                 if j >= (nrow -1):  # if we're at the top of the hill                  
                   bareL[i, j-count:] = count  # record bare length                  
                 count += 1  
-                                                        
+ 
             # if [i,j] is veg and the slope cell is bare, record.
             # each patch starts at [i,j-count] and ends at [i,j-1]
             elif isvegc[i,j] == 1 and isvegc[i, j-1] == 0:   
@@ -540,5 +540,5 @@ def get_bareL(isvegc, saturate, skipflag = 0):
                   count = 0 
     bareLV[bareLV > saturate] = saturate
     bareL[bareL > saturate] = saturate
-        
+
     return  bareL, bareLV
