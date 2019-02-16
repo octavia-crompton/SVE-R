@@ -78,28 +78,6 @@ def RF_patterns(isveg, rvl_params):
             # smooth vegetion features
             pattern_dict[key + '_s{0}'.format(gs)] =   smoothV(pattern_dict[key], isvegc, gs)        
     
-    
-    # determine upslope Ls
-    if rvl_params['window']  == 'L0':
-        upslopeLs = []  
-    elif  rvl_params['window']  == 'L2':
-        upslopeLs = [2]
-    elif  rvl_params['window']  == 'L4':
-        upslopeLs = [2,4]  
-    elif  rvl_params['window']  == 'L8':
-        upslopeLs = [2,4,8]   
-    elif  rvl_params['window']  == 'L12':
-        upslopeLs = [2,4,8,12]  
-    elif  rvl_params['window']  == 'L16':
-        upslopeLs = [2,4,8,12,16]    
-    elif  rvl_params['window']  == 'L24':
-        upslopeLs = [2,4,8,12,24]                                        
-
-    # compute upslope
-    for L in upslopeLs:         
-        upslopeL =  upslope_memory(isvegc,  min(nrow, int(L)))
-        pattern_dict['upslope{0}'.format(L)] = upslopeL.copy()
-     
     # delete unsmoothed features if 0 not in gsigma
     if 0 not in gsigma:
         
@@ -107,9 +85,6 @@ def RF_patterns(isveg, rvl_params):
                     'd2uB', 'd2dB', 'd2xB','patchLB']: 
             del pattern_dict[key] 
         
-        for L in upslopeLs:                     
-            del pattern_dict['upslope{0}'.format(L)] 
-
     return pattern_dict                
 
 
@@ -147,7 +122,7 @@ def get_feature_matrix(sim, rvl_params, target = None):
     yc = yc.T
             
     pattern_dict = RF_patterns(isvegc, rvl_params)    
-    features =  pattern_dict.keys() + "d2divide"
+    features =  pattern_dict.keys() + ["d2divide"]
      
     pattern_ravel = {}
     eqv_size =  int(np.size(isvegc.ravel()))
@@ -567,19 +542,3 @@ def get_bareL(isvegc, saturate, skipflag = 0):
     bareL[bareL > saturate] = saturate
         
     return  bareL, bareLV
-
-def upslope_memory(isvegc,  memory = 3):
-    """
-    
-    """
-    ncol = isvegc.shape[0]
-    nrow = isvegc.shape[1]
-    
-    dum = isvegc.copy()
-    memory = int(memory)
-    for k in range(int(nrow - memory)):
-        dum[:, k] = isvegc[:, k:k+memory].sum(1)
-    for k in range(1,memory+1):    
-        dum[:, -k] = isvegc[:, -k:].sum(1)
-    # dum[isvegc == 0] = 0
-    return dum
