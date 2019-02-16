@@ -113,6 +113,68 @@ def RF_patterns(isveg, rvl_params):
     return pattern_dict                
 
 
+
+def get_feature_matrix(sim, rvl_params, target = None):
+    """
+    Compute feature matrix for an input vegetation field (sim['isvegc'])
+ 
+    input: 
+         sim: dictionary containing vegetation map (isvegc) and grid resolution (dx)
+         
+     veg features, bare features
+    
+    tasks:
+      get pattern_dict from RF_patterns  (in ravel_fxns_RF.py)
+      
+      for all the keys in features:
+        if in pattern_dict, np.ravel and add to pattern_ravel
+        if in sim dict (non-array), add as list with equiv size
+        skip 'local_path' key
+        add 'd2divide' manually (units : grid cell)
+    
+    """
+    isvegc = sim['isvegc'].astype(float)
+    dx = sim['dx']
+    
+    ncol = isvegc.shape[0]
+    nrow = isvegc.shape[1]
+    
+    xc = np.arange(0, ncol*dx, dx)  + dx/2
+    yc = np.arange(0, nrow*dx, dx)  + dx/2
+    xc, yc = np.meshgrid(xc, yc)
+    
+    xc = xc.T
+    yc = yc.T
+            
+    pattern_dict = RF_patterns(isvegc, rvl_params)    
+    features =  pattern_dict.keys() + "d2divide"
+     
+    pattern_ravel = {}
+    eqv_size =  int(np.size(isvegc.ravel()))
+
+    for key in features:
+        if key in pattern_dict:
+            pattern_ravel[key] = np.ravel(pattern_dict[key])
+
+        elif key in sim.keys() and type(sim[key]) != np.ndarray:            
+            pattern_ravel[key] = np.array([sim[key]]*eqv_size)  
+
+        elif key =='d2divide':
+            pattern_ravel[key] = (nrow - yc/dx).ravel() # ( nrow - yc/sim.dx).ravel()  
+
+        else:
+            print key
+    
+    pattern_ravel['isvegc'] = np.ravel(isvegc)
+    pattern_ravel['fV'] = np.array([np.mean(isvegc)]*eqv_size)
+    
+    if target:
+        pattern_ravel[target] = np.ravel(sim[target])        
+ 
+    pattern_ravel = pd.DataFrame(pattern_ravel)
+
+    return pattern_ravel
+    
 def smoothB(U, isvegc, gsigma):
     """
     Smooths over vegetated cells (1s) with a Gaussian filter,
@@ -142,7 +204,7 @@ def smoothV(U, isvegc, gsigma):
     Inputs: 
         U : array to smooth over
         isvegc : vegetated cells
-
+        gsigma : standard deviation of the Gaussian kernel, determining length scale of smoothing
     Outputs:
         
     """

@@ -33,8 +33,9 @@ Examples:
 Notes:
  
 This code is provided as a supplement to the paper: "Name of Paper" (available 
- [here](http://example.com "Title")).
+ [here](http://example.com "Title"), referred to here as the emulator paper).
  The terminology used in the code vs. the companion paper differ in several ways:
-First, impermeable and permeable areas are labeled here as bare soil and vegetated patches, respectively.  
-The model simulations described in the emulator paper were run in parallel, whereas the code provided here is is for a single 
+Firstly, the model is referred to in the documentation as the SVE-R model (Saint Venant Equation - Richards equation), and in the paper as the "SVE" model for simplicity. 
+Second, the emulator paper describe impermeable and permeable areas, which are labeled here as bare soil and vegetated patches.  
+The model simulations described in the emulator paper were run in parallel, whereas the code provided here is is for a single simulation.
 
