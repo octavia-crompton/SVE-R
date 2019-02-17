@@ -960,13 +960,12 @@ Example Python scripts are provided to generate the Fortran input files, execute
 \subsubsection*{Infiltration parameters}
 \begin{itemize}
 	\item \code{Ks} : infiltration rate in vegetated/permeable areas, in cm/hr.  
-	\item \code{KsB} : infiltration rate in bare soil/impermeable areas, in cm/hr. 
-	\item \code{s\_scale} : the soil infiltration ratio between vegetated and non-vegetated (or permeable/impermeable) areas.	
+	\item \code{KsB} : infiltration rate in bare soil/impermeable areas, in cm/hr.
 	
-	\item \code{stop\_tol} : error tolerance for Richards equation convergence, 	default = 0.01
+	\item \code{stop\_tol} : error tolerance for Richards equation convergence,	default = 0.01
 
 	\item \code{tsat\_min}: default = 600.  Specified in seconds.  Minimum time until the soil is allowed to saturate ($i$ is set to $K_{sat}$, bypassing the Richards equation solver.
-	\item \code{H\_i} : initial $H$ at the surface.  The soil is initialized to an equilibrium profile (this can be modified in \code{sim\_input.py}.
+	\item \code{H\_i} : initial $H$ at the surface.  The soil is initialized to an equilibrium profile (this can be modified in \code{sim\_input.py}).
 \end{itemize}
 
 \begin{itemize}
