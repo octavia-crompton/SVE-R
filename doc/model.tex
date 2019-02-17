@@ -394,9 +394,12 @@ The \code{init} subroutine initializes the SVE component of the model,  which in
  The infiltration and parameters  are initialized in the subroutine \code{initVG}.  The following briefly describes the input files, and further details are included in Appendix (including an illustrative example of a  2$\times$2 grid)
   
 \subsubsection*{Input files}
+
+The following is a brief list of required input files, located in \code{input}. See Appendix B for further details and sample input files.
+
 \begin{itemize}
 
-	\item \code{params.dat} : \code{params.dat} specifies a number of scalar parameters, and is read by the \code{init} subroutine of \code{dry.for}.  See Appendix for a list of the input parameters and sample \code{params.dat} file.
+	\item \code{params.dat} : \code{params.dat} specifies a number of scalar parameters (read by the \code{init} subroutine).  
 
 	\item \code{coords.dat} : contains the $x$,$y$,$z$ coordinates at the cell nodes.
 
@@ -410,32 +413,8 @@ The \code{init} subroutine initializes the SVE component of the model,  which in
 
 \end{itemize}
 
-% MOVE TO APPENDIX
-%\code{coords.dat} : the first line contains the number of points (\code{npt = (ncol+1)*(nrow+1)})  and the number of cell edges (\code{ne = nrow*ncol}). 
-% 
-%\code{boundary.dat}: the first row contains the number of boundary cells, defined as a grid cell with one or more boundaries.
-% Columns are \code{j k inum itype ipos}.
-% 
-% \code{input\_boundary.py} loops over all of the boundary cells, and records the boundary location \code{j,k}, number \code{inum}, type \code{itype}, and position \code{ipos}.  
-% Following this, 
-% the following rows record: 
-% the number of columns and rows, and, for each column, 
-% the beginning and final row  (i.e. \code{kbeg = 1} and \code{kend = nrow}.
-%  
-Boundary types are:
-\begin{itemize}
-	\item  \code{itype} = 1 for a closed boundary
-	\item  \code{itype} = 0 for an open boundary
-	\item  \code{itype} = 4 for a subcritical fixed flux boundary  (limited support)
-	\item  \code{itype} = 5 for a supercritical influx boundary (no support).
- \end{itemize}
- 
-  For subcritical fixed flux boundary,  the normal depth is computed  with Manning's equation with $n=0.1$.  
-The input parameter \code{influx} is specified in unis m$^2$/s.  The rainfall rate (in cm/hr) can be related to \code{influx} as:
-$p$ (cm/hr) = $q$ (m$^2$/s) $\cdot$ 3600 s/hr /($L_y$ m) $\cdot$ 100 cm/m
- or $q \cdot$3.6e5/$L_y$.
- 
- Equivalent \code{influx} is $p*Ly/3.6e5$ = equivalent $q$ (m\^2/s)
+
+
 
 
 \subsubsection*{Grid Set-up}
@@ -948,8 +927,9 @@ Example Python scripts are provided to generate the Fortran input files, execute
 \begin{itemize}
 	\item \code{write\_param}: writes the general parameter file  \code{params.dat}.
 	\item \code{input\_veg.py}: contains functions to write the input vegetation file \code{veg.dat}.
-	\item \code{input\_coords.py}: contains functions to write the  grid and topography files \code{coords.dat}, \code{boundary.dat}, \code{nodes.dat}. 
-	\item \end{itemize}
+	\item \code{input\_coords.py}: contains functions to write the  grid and topography files \code{coords.dat}, \code{nodes.dat}. 
+	\item \code{input\_boundary.py} contains functions to write the boundary file \code{boundary.dat}.
+\end{itemize}
 
 
 \subsection{Parameters specified in \code{params.json} }
@@ -961,18 +941,17 @@ Example Python scripts are provided to generate the Fortran input files, execute
 		\subitem Hillslope length \code{Ly} = \code{nrow * dx} 
 	\item \code{ncol} :  Number of grid cells in the transverse (across-slope) direction (default = 10).
 	 	\subitem Hillslope width \code{Lx} = \code{ncol * dx} 
+	 	
+	\item \code{topo} : Topography type (default = "plane", specifying a planar hillslope). 
 
-	\item \code{topo} : default = "plane", specifying a planar hillslope, aligned along the y-axis.  other option is to specify coordinates.
-
-	\item \code{vegtype} : specified how the vegetation field is built
-		\subitem \code{randv} : random vegetation field, defined by $\sigma_V$ and $f_V$
-	\subitem \code{image} : read from image file.
-		
-%%%% Resistance formualtion 
-	\item \code{scheme} : resistance formulation (default in Manning equation)
-		\subitem specifying the scheme is equivalent to specifying eta and m (see source subroutine, where roughness formulation is implemented. Explicitly specifying m and/or eta will overwrite these default parameters. 
-	\item \code{alpha} / $\alpha_V$ : generalized roughness parameters for vegetated / permeable areas. If Manning's equation is used to specify the resistance formulation, then  $\alpha_B = n_B$.
-	\item \code{alpha\_B} / $\alpha_B$ : equivalent to \code{alpha} / $\alpha_V$   for bare soil areas.
+	\item \code{vegtype} : specifies the vegetation field type, with options:
+		\begin{itemize}
+		\item \code{randv} : randomly-generated vegetation field, constructed with parameters $f_V$ (vegetation fraction) and $\sigma_x$, $\sigma_y$, (across- and along-slope patch length-scales).
+	    \item \code{image} : read vegetation field from an image file (e.g. jpeg or png). In this case, the image file name must be included under the field \code{image\_name}.
+		\end{itemize}
+%%%% Resistance formualtion  
+	\item \code{alpha} / $\alpha_V$ : generalized roughness parameters for vegetated / permeable areas. If Manning's equation is used, then  $\alpha = n$.
+	\item \code{alpha\_B} / $\alpha_B$ : equivalent to \code{alpha} / $\alpha$   for bare soil areas.
 %%%%%  Solver parameters 
 	\item \code{epsh} / $\epsilon$: depth tolerance for dry cells.  The momentum equations are not solved if \code{h< epsh} ($h<\epsilon$).
 	\item \code{beta} / $\beta$ : a constant in limiter subroutine if ilim = 5, beta family (default = 1).   
@@ -980,11 +959,8 @@ Example Python scripts are provided to generate the Fortran input files, execute
 
 \subsubsection*{Infiltration parameters}
 \begin{itemize}
-	\item \code{KsV} : infiltration rate in vegetated/permeable areas, in cm/hr.  
-		\subitem  Note \code{ksatV=KsV/3600.} is the infiltration rate in units of cm/s.
-	\item \code{KsB} : infiltration rate in bare soil/impermeable areas, in cm/hr.  
-		\subitem  Note \code{ksatB=KsB/3600.} is the infiltration rate in units of cm/s.
-		\subitem If \code{KsB} is not specified, then \code{KsB} is set to \code{KsV/s\_scale}, where \code{s\_scale} is the ratio.
+	\item \code{Ks} : infiltration rate in vegetated/permeable areas, in cm/hr.  
+	\item \code{KsB} : infiltration rate in bare soil/impermeable areas, in cm/hr. 
 	\item \code{s\_scale} : the soil infiltration ratio between vegetated and non-vegetated (or permeable/impermeable) areas.	
 	
 	\item \code{stop\_tol} : error tolerance for Richards equation convergence, 	default = 0.01
@@ -1104,6 +1080,7 @@ The stand-alone 1D Richards equation solver is structured as a class \code{Richa
 
 
 
+
 %\section{Appendix A: \code{dry.f} parameters and variables }
 
 %\subsection{Source subroutine variables}
@@ -1132,13 +1109,14 @@ The stand-alone 1D Richards equation solver is structured as a class \code{Richa
 %\end{itemize}
 %
 
-\section*{Appendix B: A 2$\times$2 grid example}
+\section*{Appendix B: Input and output files, and a 2$\times$2 grid example}
+
 
 
 %
 %\code{nop(1,1,:) = [1,4,5,2]} means that cell (1,1) is bounded by nodes \code{n1=1,n2=4,n3=5,n4=2}, starting from the lower left node \code{n1} moving counterclockwise.
 % \code{itype(j,k,2)=1, itype(j,k,3)=4}, means that cell \code{(j,k)} has a closed boundary at position 2 (right) and a subcritical influx boundary at position 3 (top). See Figure	 \ref{nodes}.			
-%	 
+%	
 	 
 
 To illustrate the grid set-up, example input files are included here for the 2x2 grid example.  Note that while the SVE-R model Fortran code does not assume a  rectangular grid, the provided Python code and sample input files do assume a rectangular grid. 
@@ -1183,13 +1161,35 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
 	\item \code{tsat\_min} : Minimum time until the soil is allowed to ``sarturate'' (default =0).
 \end{itemize}
 
+
+
+ 
+% Following this, 
+% the following rows record: 
+% the number of columns and rows, and, for each column, 
+% the beginning and final row  (i.e. \code{kbeg = 1} and \code{kend = nrow}.
+%  
 \subsection{boundary.dat}
 
-Sample \code{boundary.dat} for the 2x2 grid example, for which every cell is a boundary cell. 
-The array on lines 3-7 show the (j,k) indices for each boundary cell, the number of boundaries associated with that cell, and boundary type of each boundary cell.
+\code{boundary.dat} specifies the boundary cell locations, types and orientations.  
+For each boundary cell location (\code{j,k} indices), the number of boundary faces (\code{inum}), types (\code{itype}) and orientations (\code{ipos}) must be specified.
+\code{boundary.dat} also lists any fixed boundary condition cells (\code{fix}) and the relevant primitive variables ($h$, $U$ and/or $V$, depending on the boundary type).
 
-\code{inum}  is the number of boundary faces in a boundary cell,
-and   \code{ipos} is the orientation of boundary face: (bottom:1, right2, top:3, left:4).
+Provided boundary types are:
+\begin{itemize}
+	\item  \code{itype} = 1 for a closed boundary
+	\item  \code{itype} = 0 for an open boundary
+	\item  \code{itype} = 4 for 	 a subcritical inflow boundary
+	\item  \code{itype} = 5 for a supercritical influx boundary
+ \end{itemize}
+ 
+For a subcritical inflow boundary,  the normal depth is computed  with Manning's equation with $n=0.1$.  
+The input parameter \code{influx} is specified in unis m$^2$/s, which can be related to the rainfall rate (in cm/hr) as: $p$ = $q\cdot 3.6e5/L_y $ (cm/hr), or  \code{influx}  $q = p\cdot L_y/3.6e5$  (m$^2$/s).
+
+
+Below is a sample \code{boundary.dat} for the 2x2 grid example, for which every cell is a boundary cell. 
+The first two rows contain the number of boundary cells, defined as a grid cell with one or more boundaries.
+The array on lines 3-7 show the (j,k) indices for each boundary cell, the number of boundaries associated with that cell, and boundary type of each boundary cell.
 
 \begin{verbatim}
 number of boundary cell 
