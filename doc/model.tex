@@ -376,7 +376,7 @@ The core of the model, \code{dry.f}, is written in Fortran, an involves a number
  \end{figure}
 
 
-Figure \ref{summary} summarizes the workflow of \code{dry.f}, which can be divided into main two steps: (1) initializing and (2) running the model.   The following subsections describe \code{dry.f} components in greater detail.
+Figure \ref{summary} summarizes the workflow of \code{dry.f}, which can be divided into main two steps: (1) initializing and (2) executing a time loop.   The following subsections describe \code{dry.f} components in greater detail.
 
 
 \begin{figure}[h]
@@ -410,22 +410,18 @@ The \code{init} subroutine initializes the SVE component of the model,  which in
 
 \end{itemize}
 
-\subsubsection*{\code{coords.dat}}
-\code{coords.dat}  The first line contains the number of points (\code{npt = (ncol+1)*(nrow+1)})  and the number of cell edges (\code{ne = nrow*ncol}). 
- 
- 
-\subsubsection*{\code{boundary.dat}}
- 
- The first row contains the number of boundary cells, defined as a grid cell with one or more boundaries.
- 
- columns are \code{j k inum itype ipos}.
- 
- \code{input\_boundary.py} loops over all of the boundary cells, and records the boundary location \code{j,k}, number \code{inum}, type \code{itype}, and position \code{ipos}.  
- Following this, 
- the following rows record: 
- the number of columns and rows, and, for each column, 
- the beginning and final row  (i.e. \code{kbeg = 1} and \code{kend = nrow}.
-  
+% MOVE TO APPENDIX
+%\code{coords.dat} : the first line contains the number of points (\code{npt = (ncol+1)*(nrow+1)})  and the number of cell edges (\code{ne = nrow*ncol}). 
+% 
+%\code{boundary.dat}: the first row contains the number of boundary cells, defined as a grid cell with one or more boundaries.
+% Columns are \code{j k inum itype ipos}.
+% 
+% \code{input\_boundary.py} loops over all of the boundary cells, and records the boundary location \code{j,k}, number \code{inum}, type \code{itype}, and position \code{ipos}.  
+% Following this, 
+% the following rows record: 
+% the number of columns and rows, and, for each column, 
+% the beginning and final row  (i.e. \code{kbeg = 1} and \code{kend = nrow}.
+%  
 Boundary types are:
 \begin{itemize}
 	\item  \code{itype} = 1 for a closed boundary
@@ -440,7 +436,6 @@ $p$ (cm/hr) = $q$ (m$^2$/s) $\cdot$ 3600 s/hr /($L_y$ m) $\cdot$ 100 cm/m
  or $q \cdot$3.6e5/$L_y$.
  
  Equivalent \code{influx} is $p*Ly/3.6e5$ = equivalent $q$ (m\^2/s)
-
 
 
 \subsubsection*{Grid Set-up}
@@ -473,25 +468,45 @@ $p$ (cm/hr) = $q$ (m$^2$/s) $\cdot$ 3600 s/hr /($L_y$ m) $\cdot$ 100 cm/m
  
 
 
-
-\subsubsection*{2x2 Grid example}
-
-\code{nop(1,1,:) = [1,4,5,2]} means that cell (1,1) is bounded by nodes \code{n1=1,n2=4,n3=5,n4=2}, starting from the lower left node \code{n1} moving counterclockwise.
- \code{itype(j,k,2)=1, itype(j,k,3)=4}, means that cell \code{(j,k)} has a closed boundary at position 2 (right) and a subcritical influx boundary at position 3 (top). See Figure	 \ref{nodes}.			
-	 
-
-
 %
 %$$ U_\xi = \code{uxi} ,  \quad U_\eta = \code{ueta} $$
 %
-
-
 
 
 vertical cell faces have index 1,
 horizontal faces have index 2
 
 %\code{ds(j,k,2)} : area of the lower horizontal boundary of cell \code{j,k} (\code{ipos = 1}), in m$^2$.
+
+\subsection{Output files}
+ Most outputs are saved at intervals of  $dt\_p$, to limit the size of the output files.
+
+\begin{itemize}
+	\item \code{time.out} : file containing time, and max CFL number at each timestep.
+	\item \code{h.out} : contains $h$,$U$, $V$,
+	\item \code{summary.out} : summarizes ponding time, runtime, final time, and if applicable, the reason for an early exit (i.e. no more water, AMAX too big) 
+	\item \code{hydro.out} : hydrograph at 1 second time resolution.  The hydrograph is saved by Fortran with m$^3$/s units,  and normalized by the hillslope dimensions to convert to cm/s in Python. Read by function \code{new\_hydro.out} in \code{output\_dry.py}.
+	\item \code{dvol.out} :  output file to check mass balance. Read by function \code{get\_dvol} in \code{output\_dry.py}. See details below.
+
+	\item \code{ptsTheta.out} (optional) : evolution of the soil moisture profiles at two points, one vegetated and one bare. 
+\end{itemize}
+
+
+% MOVE TO APPENDIX
+%\code{h.out}: columns are \code{j,k,h,u,v,zinflmap2, xflux0,yflux0,xflux1,yflux1}. 
+%
+%These variables are written to \code{h.out} for every grid cell (every j,k) when \code{myoutput} is called, every nprt timesteps (every \code{dt\_p}. 
+%
+% \code{zinflmap2} contains the total volume of water infiltrated in cell j,k, and is reset to zero when this variable is written to file. 
+%
+%
+%\code{dvol.out}
+%
+%Contains output from Fortran mass balance tracking.
+%Columns are \code{dvol, flux, infl,zain}  from Fortran mass tracking, containing the  change in surface volume, horizontal fluxes out of the domain, infiltration and rain volumes, respectively, in units m$^3$.
+%
+%The Python function \code{get\_dvol} in \code{output\_dry.py} reads only the first three columns {dvol, flux, infl}, and the last is available for mass balance debugging.  \code{get\_dvol} normalizes by the domain area (Lx*Ly) and converts to cm.
+%
 
 \subsection{The predictor step}
 
@@ -848,69 +863,15 @@ The subroutine \code{potential} is used to compute the potential infiltration ra
 Potential infiltration is computed when there is rain but no ponding, and returns the potential infiltration rate, defined as the infiltration rate that would occur with $H=0$ at the surface.  
 
  
- \section{Running the model}
+\section{Running the model}
 
 The Fortran code can be compiles from the terminal as
     \code{gFortran -o ./sw  -framework accelerate ./dry.for}
 and executed as \code{.sw}, where \code{sw} is the name of the compiled executable.
   
-   
-
-\subsubsection*{input\_coords.py / wrap\_coords}
-
-\code{sim\_input.py} calls \code{wrap\_coords} for each path / parameter case:
-\begin{center}
-	   \code{ wrap\_coords(path + '/input', params)}
-\end{center}
-
- which calls the following:
-
-\begin{itemize}
-\item \code{write\_nodes(path, ncol, nrow)  }: writes the cell node indices to \code{input/nodes.dat}.  
-    This function assumes that the grid is rectangular, and would need to be modified for a non-rectangular grid. 
-       It saves \code{nop}, which contains the indices of the nodes surrounding each cell face.
-\item code{build\_coords(params)} : constructs the x,y,z fields. 
-\end{itemize}
 
 
-%
-%\noindent Note: \code{coords.pklz} stores the cell center coordinates in a Python readable file, and is not a Fortran input file.
-
-
-
-
-\subsection{Output files}
- Most outputs are saved at intervals of  $dt\_p$, to limit the size of the output files.
-
-\begin{itemize}
-	\item \code{time.out} : file containing time, and max CFL number at each timestep.
-	\item \code{h.out} : contains $h$,$U$, $V$,
-	\item \code{summary.out} : summarizes ponding time, runtime, final time, and if applicable, the reason for an early exit (i.e. no more water, AMAX too big) 
-	\item \code{hydro.out} : hydrograph at 1 second time resolution.  The hydrograph is saved by Fortran with m$^3$/s units,  and normalized by the hillslope dimensions to convert to cm/s in Python. Read by function \code{new\_hydro.out} in \code{output\_dry.py}.
-	\item \code{dvol.out} :  output file to check mass balance. Read by function \code{get\_dvol} in \code{output\_dry.py}. See details below.
-
-	\item \code{ptsTheta.out} (optional) : evolution of the soil moisture profiles at two points, one vegetated and one bare. 
-\end{itemize}
-
-
-\subsubsection*{h.out}
-
-Columns are \code{j,k,h,u,v,zinflmap2, xflux0,yflux0,xflux1,yflux1}. 
-
-These variables are written to \code{h.out} for every grid cell (every j,k) when \code{myoutput} is called, every nprt timesteps (every \code{dt\_p}. 
-
- \code{zinflmap2} contains the total volume of water infiltrated in cell j,k, and is reset to zero when this variable is written to file. 
-
-
-\subsubsection*{dvol.out}
-
-Contains output from Fortran mass balance tracking.
-Columns are \code{dvol, flux, infl,zain}  from Fortran mass tracking, containing the  change in surface volume, horizontal fluxes out of the domain, infiltration and rain volumes, respectively, in units m$^3$.
-
-The Python function \code{get\_dvol} in \code{output\_dry.py} reads only the first three columns {dvol, flux, infl}, and the last is available for mass balance debugging.  \code{get\_dvol} normalizes by the domain area (Lx*Ly) and converts to cm.
-
-
-\section{The Simulated Domain}
+\subsection{The Simulated Domain}
 
 To simulate runoff/runon environments on patchily-vegetated hillslopes, several aspects of the BK model have been modified (in addition to coupling to a 1D Richards solver).  This section describes the simulated domain, as illustrated in Figure \ref{domain_schematic}.
 
@@ -935,6 +896,25 @@ The van Genuchten parameters and vertical structure of the soil can be modified 
 
 
 \section{Python wrapper scripts}
+
+
+
+%\code{sim\_input.py} calls \code{wrap\_coords} for each path / parameter case:
+%\begin{center}
+%	   \code{ wrap\_coords(path + '/input', params)}
+%\end{center}
+%
+% which calls the following:
+%
+%\begin{itemize}
+%\item \code{write\_nodes(path, ncol, nrow)  }: writes the cell node indices to \code{input/nodes.dat}.  
+%    This function assumes that the grid is rectangular, and would need to be modified for a non-rectangular grid. 
+%       It saves \code{nop}, which contains the indices of the nodes surrounding each cell face.
+%\item code{build\_coords(params)} : constructs the x,y,z fields. 
+%\end{itemize}
+
+%\noindent Note: \code{coords.pklz} stores the cell center coordinates in a Python readable file, and is not a Fortran input file.
+
 
 Example Python scripts are provided to generate the Fortran input files, execute \code{dry.f} and read the outputs.   \code{call\_dry.py} is a control script which executes each of these components, as illustrated in the Figure \ref{schematic} schematic.
 
@@ -1154,6 +1134,12 @@ The stand-alone 1D Richards equation solver is structured as a class \code{Richa
 
 \section*{Appendix B: A 2$\times$2 grid example}
 
+
+%
+%\code{nop(1,1,:) = [1,4,5,2]} means that cell (1,1) is bounded by nodes \code{n1=1,n2=4,n3=5,n4=2}, starting from the lower left node \code{n1} moving counterclockwise.
+% \code{itype(j,k,2)=1, itype(j,k,3)=4}, means that cell \code{(j,k)} has a closed boundary at position 2 (right) and a subcritical influx boundary at position 3 (top). See Figure	 \ref{nodes}.			
+%	 
+	 
 
 To illustrate the grid set-up, example input files are included here for the 2x2 grid example.  Note that while the SVE-R model Fortran code does not assume a  rectangular grid, the provided Python code and sample input files do assume a rectangular grid. 
  Figure \ref{2by2} shows the cell center and node indices for the example grid, and Figure \ref{2by2boundary} shows the boundaries, which are a fixed-flux subcritical boundary at the top of the hill, closed/wall lateral boundaries, and an open boundary at the bottom of the hill.
