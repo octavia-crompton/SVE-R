@@ -188,7 +188,7 @@ C Check for negative depth.
               h(j,k) = q(j,k,1)
             else
               zinfl = zinfl - q(j,k,1)*area(j,k)
-              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)   							                      
+              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)
               q(j,k,1) = 0.D0
               h(j,k) = 0.D0
             endif
@@ -354,7 +354,6 @@ C    Save H and Theta for two points - one vegetated and one bare
      &                  r8THETA(jbare,kbare,l), 
      &                  r8H(jbare,kbare,l)
       enddo  
-
 
       return
  202  format(' ', A8, f9.2)

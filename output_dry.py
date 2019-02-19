@@ -94,7 +94,7 @@ def read_ptsTheta(path, nz = 51 ):
     
     f = open("{0}/output/ptsTheta.out".format(path), 'r')
     f.next()
-    f.next()
+    
     for line in f:
         a = (line.strip().split(" "))
         a = [myfloat(b) for b in a if b]
@@ -105,7 +105,7 @@ def read_ptsTheta(path, nz = 51 ):
 
         except ValueError:
             ThetaH.append(dum.copy())    
-    
+    ThetaH.append(dum.copy())    
     ThetaH = np.array(ThetaH)
     vegTheta = ThetaH[:, :, 0]
     vegH = ThetaH[:, :, 1]  
@@ -170,8 +170,17 @@ def read_h(path, ncol , nrow , dx  ):
             xflux0.append(xfluxdum0.copy())            
             yflux0.append(yfluxdum0.copy()) 
             xflux1.append(xfluxdum1.copy())            
-            yflux1.append(yfluxdum1.copy())  
-                                 
+            yflux1.append(yfluxdum1.copy()) 
+             
+    h.append(hdum.copy())    
+    u.append(udum.copy())
+    v.append(vdum.copy())
+    zinflmap2.append(infldum.copy())
+    xflux0.append(xfluxdum0.copy())            
+    yflux0.append(yfluxdum0.copy()) 
+    xflux1.append(xfluxdum1.copy())            
+    yflux1.append(yfluxdum1.copy()) 
+    
     h = np.array(h)
     u = np.array(u)
     v = np.array(v)

@@ -3,7 +3,7 @@ grav        dt
 tmax      t_rain    
 900       300     
 prate      nt  
-8.33333333333e-06        900000   
+0.0        900000   
 epsh      beta     
 0.0002        1.0     
 nprt      

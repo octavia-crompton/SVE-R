@@ -355,7 +355,6 @@ C    Save H and Theta for two points - one vegetated and one bare
      &                  r8H(jbare,kbare,l)
       enddo  
 
-
       return
  202  format(' ', A8, f9.2)
  201  format(' ', 2i4, 8e15.6) 
