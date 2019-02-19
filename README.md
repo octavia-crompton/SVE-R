@@ -1,6 +1,17 @@
-Brief summary:
+__Brief summary__
 
-The core of the SVE-R model is in dry.f, and a number of python wrapper functions are provided to facilitate its use.  The SVE-R model and python scripts are documented in detail in doc/model.pdf.
+The core of the SVE-R model is in dry.f, and a number of python wrapper functions are provided to facilitate its use.  Please refer to documentation (model.pdf) for further details on the SVE-R model and python scripts.
+
+__Quick start__
+
+1. Create a subfolder `test`, containing a params.json file (see example subfolders for examples).  
+2. Open a terminal and nagivate to the model directory.
+3. Call the command: `python call_dry.py test`
+
+Notes:
+- The Fortran code requires the accelerate framework.
+- Python package requirements can be found in `requirements.txt`.  
+
 
 __List of files:__
 

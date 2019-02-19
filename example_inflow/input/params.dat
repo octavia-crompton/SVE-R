@@ -1,6 +1,6 @@
-gravity     dt           
+grav        dt           
 9.806d0     0.001          
-tmax       t_rain    
+tmax      t_rain    
 900       300     
 prate      nt  
 0.0        900000   
@@ -22,5 +22,5 @@ jveg     kveg
 2      2 
 jbare     kbare       
 11       1 
-iBC      tsat_min 
-1       0 
+tsat_min 
+0 
