@@ -134,8 +134,8 @@ def sim_input(path):
     soil_params =  { "Ks" : Ks,
                     "L": 0.5,
                     "n": 1.47,
-                    "theta_r": 0.0378,
-                    "theta_s": 0.472,
+                    "theta_R": 0.0378,
+                    "theta_S": 0.472,
                     "alpha": 0.0096,
                     "lambda": 0.47}
                     

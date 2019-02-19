@@ -12,12 +12,12 @@
 
       common/reals/  flux, tp, start, finish
 
-      common/reals/  tmax,dt,t,tc,tr,beta, 
+      common/reals/  tmax,dt,t,tc,t_rain,beta, 
      &               xk, dz, dtinfl, 
      &               r8fluxin, r8fluxout, r8error, r8newmass
 
       common/reals/  dxdum, r8mV,r8etaV, r8alphaV,
-     &               r8mB, r8etaB, r8alphaB, r8L 
+     &               r8mB, r8etaB, r8alphaB
 
       common/array/  xc(0:nx,0:ny), yc(0:nx,0:ny), zc(0:nx,0:ny), 
      &               dzz(0:nx,0:ny,2), xnc(0:nx,0:ny), 

@@ -51,7 +51,7 @@ def sim_read(path):
                       'early_exit', 'no_flow',
                       'hmax', 'vmax', 'qmax',
                       'hc', 'uc', 'vc', 'inflVmap',
-                      'dvol', 'flux', 'infl',
+                      'dvol', 'flux', 'infl','zrain',
                       'volD', 'fluxD', 'rainD', 'inflD',
                       'flux1', 'flux2', 'flux3', 'flux4',
                       'mass_bal', 'infl_frac',   'zinflc', 
@@ -85,7 +85,7 @@ def sim_read(path):
       no_flow = False
     
     #  mass balance file:  dvol.out
-    dvol, flux, infl  = read_dvol(path, Lx = Lx, Ly = Lx) # cm                    
+    dvol, flux, infl,zrain  = read_dvol(path, Lx = Lx, Ly = Ly) # cm                    
     
     # boundary fluxes. units: cm/s
     flux1, flux2, flux3, flux4 = lateral_fluxes(path, params) 

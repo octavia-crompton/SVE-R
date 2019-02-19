@@ -108,8 +108,9 @@ def write_coords(path, ncol, nrow, dx, x, y, z):
     
     fname = '{0}/coords.dat'.format(path)
     f = open(fname, 'w')
+    f.write('{0:<13}   {1:<13}\n'.format("npt", "ne"))    
     f.write('{0:<13}   {1:<13}\n'.format(npt, ne))
-    
+    f.write('{0:<13} {1:<13} {2:<13}  \n'.format("x", "y","z"))
     # write x, y, z
     for n in range(npt):
         f.write('{0:<13.6f} {1:<13.6f} {2:<13.6f}  \n'.format(

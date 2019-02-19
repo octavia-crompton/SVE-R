@@ -90,19 +90,21 @@ def read_ptsTheta(path, nz = 51 ):
     """  
     ThetaH = []
     
-    ThetaHdum =  np.zeros([nz, 4])
-    for line in open("{0}/output/ptsTheta.out".format(path), 'r'):
+    dum =  np.zeros([nz, 4])
+    
+    f = open("{0}/output/ptsTheta.out".format(path), 'r')
+    f.next()
+    f.next()
+    for line in f:
         a = (line.strip().split(" "))
         a = [myfloat(b) for b in a if b]
         
-        if len(a) > 2:
+        try: 
             k = int(a[0])-1
-            ThetaHdum[k, :] = a[2:]
+            dum[k, :] = a[2:]
 
-        elif len(a)== 2:
-            
-            dumt = int(a[0])
-            ThetaH.append(ThetaHdum.copy())    
+        except ValueError:
+            ThetaH.append(dum.copy())    
     
     ThetaH = np.array(ThetaH)
     vegTheta = ThetaH[:, :, 0]
@@ -115,7 +117,7 @@ def read_ptsTheta(path, nz = 51 ):
     
 def read_h(path, ncol , nrow , dx  ):
     """
-    Reads the sve output variables from output/h.out
+    Reads the SVE output variables from output/h.out
     Returns  h (m), u and v (m/s), infiltration (m2*cm) and intercell fluxes (m2*cm)
         with time resolution dt_p
       
@@ -141,8 +143,10 @@ def read_h(path, ncol , nrow , dx  ):
     xfluxdum1 =  np.zeros([ncol, nrow])    
     
     yflux1 = []
-    yfluxdum1 =  np.zeros([ncol, nrow])    
+    yfluxdum1 =  np.zeros([ncol, nrow])  
+      
     f = open("{0}/output/h.out".format(path), 'r')
+    f.next()
     f.next()
     for line in f:
         a = (line.strip().split(" "))
@@ -158,17 +162,16 @@ def read_h(path, ncol , nrow , dx  ):
             yfluxdum0[j,k] = a[7] 
             xfluxdum1[j,k] = a[8]
             yfluxdum1[j,k] = a[9]                        
-        except IndexError:
-            dumt = int(a[0])
+        except ValueError:            
             h.append(hdum.copy())    
             u.append(udum.copy())
             v.append(vdum.copy())
             zinflmap2.append(infldum.copy())
             xflux0.append(xfluxdum0.copy())            
             yflux0.append(yfluxdum0.copy()) 
-
             xflux1.append(xfluxdum1.copy())            
-            yflux1.append(yfluxdum1.copy())                       
+            yflux1.append(yfluxdum1.copy())  
+                                 
     h = np.array(h)
     u = np.array(u)
     v = np.array(v)
@@ -179,7 +182,6 @@ def read_h(path, ncol , nrow , dx  ):
     yflux1 = np.array(yflux1)        
     # convert fortran zinflmap2 units of m3 to cm*m2
     inflVmap = zinflmap2*100 
-    
     # convert fortran  m3 to cm*m2
     xflux0 = xflux0*100  # m3 --> cm*m2
     xflux1 = xflux1*100  # m3 --> cm*m2
@@ -204,7 +206,7 @@ def read_dvol(path, Lx, Ly):
     dvol = []
     infl = [] 
     flux = []
-
+    zrain = []
     f = open('{0}/output/dvol.out'.format(path), 'r'); 
     f.next()
     for line in f:
@@ -214,16 +216,20 @@ def read_dvol(path, Lx, Ly):
         dvol.append(a[1])
         flux.append(a[2])
         infl.append(a[3])
+        zrain.append(a[4])
 
     ta = np.array(ta)
     dvol = np.array(dvol)
     flux = np.array(flux)
     infl = np.array(infl)  
+    zrain = np.array(zrain)
 
     dvol = dvol/Lx/Ly*100
     flux = flux/Lx/Ly*100
     infl = infl/Lx/Ly*100
-    return dvol, flux, infl
+    zrain = zrain/Lx/Ly*100 
+       
+    return dvol, flux, infl, zrain   
 
 def lateral_fluxes(path, params):
     """ 
@@ -239,7 +245,7 @@ def lateral_fluxes(path, params):
     flux2 = []
     flux3 = [] 
     flux4 = []
-    f = open('{0}/output/fluxes1234.out'.format(path), 'r'); 
+    f = open('{0}/output/boundary_fluxes.out'.format(path), 'r'); 
     f.next()
     for line in f:
         a = (line.strip().split(" "))

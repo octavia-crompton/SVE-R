@@ -52,10 +52,9 @@ C     Output files: saved every nprt time steps (dt_p seconds)
       open(101,file= 'output/time.out')                           
       open(100,file= 'output/h.out')                
       open(102,file= 'summary.txt')                  
-      open(103,file= 'output/cfl.out') 
       open(104,file= 'output/hydro.out')  
       open(107,file= 'output/ptsTheta.out')
-      open(110,file= 'output/fluxes1234.out')   ! boundary fluxes      
+      open(110,file= 'output/boundary_fluxes.out')   ! boundary fluxes      
       open(111,file= 'output/dvol.out')  ! SVE volume tracking              
 
 C 	  Richards output files
@@ -113,7 +112,7 @@ C     Write ICs to output files
 C    Begin time loop.
       do it = 0,nt-1
         t = t + dt
-        if (t .gt. tr) prate = 0.		
+        if (t .gt. t_rain) prate = 0.		
         amax = 0.d0
     
 C       Compute predictor.
@@ -189,7 +188,7 @@ C Check for negative depth.
               h(j,k) = q(j,k,1)
             else
               zinfl = zinfl - q(j,k,1)*area(j,k)
-              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)   							                      
+              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)
               q(j,k,1) = 0.D0
               h(j,k) = 0.D0
             endif
@@ -256,9 +255,9 @@ C         allf = 0.0
         endif 
          
 C        minimum volume to
-         r8minvol = 0.001d0*epsh*dxdum**2*nrow*ncol
+         r8minvol = 0.01d0*epsh*dxdum**2*nrow*ncol
 
-         if ((vol .le. r8minvol) .and. (t .gt. tr)) then
+         if ((vol .le. r8minvol) .and. (t .gt. t_rain)) then
 
           call gracefulExit  
           write(102,*) 'No more water, t=', t/60
@@ -336,6 +335,7 @@ C     file 101 is 'output/time.out' - to keep track of the time stpes
       write(101, *) t, amax*dt 
       
 C     file 100 is 'output/h.out' 
+	    write(100, 202) "t = ", t
       do j=1,ncol
         do k=kbeg(j),kend(j)
           write(100, 201) j, k, h(j,k), u(j,k), v(j,k),
@@ -344,19 +344,20 @@ C     file 100 is 'output/h.out'
           zinflmap2(j,k) = 0.d0       
         enddo
       enddo
-	    write(100, 202) itp, t
+
       
 C    Save H and Theta for two points - one vegetated and one bare
+      write(107, 202) "t = ", t
       do l = 1,nz
           write(107, 203) l,z(l),r8THETA(jveg,kveg,l), 
      &                  r8H(jveg,kveg,l), 
      &                  r8THETA(jbare,kbare,l), 
      &                  r8H(jbare,kbare,l)
       enddo  
-      write(107, 202) itp, t
+
 
       return
- 202  format(' ', i8, f9.2)
+ 202  format(' ', A8, f9.2)
  201  format(' ', 2i4, 8e15.6) 
  203  format(' ', i4, f8.3, 4e15.6) 
       end
@@ -897,7 +898,7 @@ C Specified depth and velocity (supercritical).
           if(isurf .eq. 1) hdum(jj,kk) = hdum(jj,kk) - zc(j,k)
       
 C Specified flow rate (subcritical).
-       elseif((itype(j,k,i) .eq. 4) .and. (t .lt. tr)) then 
+       elseif((itype(j,k,i) .eq. 4) .and. (t .lt. t_rain)) then 
           du(jj,kk,io) =  0.d0
           dv(jj,kk,io) =  0.d0 
           if(hdum(j,k) .ge. epsh) then
@@ -914,8 +915,8 @@ C Specified flow rate (subcritical).
             udum(jj,kk) = 0.D0
             vdum(jj,kk) = 0.D0
           endif   
-C Prescribe wall boundary after tr     
-       elseif((itype(j,k,i) .eq. 4) .and. (t .ge. tr)) then 
+C Prescribe wall boundary after t_rain     
+       elseif((itype(j,k,i) .eq. 4) .and. (t .ge. t_rain)) then 
          dh(jj,kk,io) = dh(j,k,io)
          du(jj,kk,io) = du(j,k,io)
          dv(jj,kk,io) = dv(j,k,io)
@@ -956,12 +957,14 @@ C Prescribe wall boundary after tr
       real ( kind = 8 ) veg(nn)
 
 			area = 0.d0
+			read(2,'(a72)') dum
       read(2,*) np, ne
     	if(np .gt. nn) then
     	  write(*,*) np
         write(*,*) 'ERROR:  parameter nn in file dry.inc is too small'
     	  stop
     	endif
+      read(2,'(a72)') dum
       do i=1,np
         read(2,*) x(i), y(i), zz(i)
       enddo
@@ -1137,7 +1140,7 @@ C Beta Family.
       read(4,'(a72)') dum
       read(4,*) grav, dt
       read(4,'(a72)') dum
-      read(4,*) tmax, tr
+      read(4,*) tmax, t_rain
       read(4,'(a72)') dum
       read(4,*) prate, nt
       read(4,'(a72)') dum      
@@ -1315,9 +1318,7 @@ C For fixed flux BCs, must initialize depth.
       read(304,'(a72)') dum 
       read(304,*) nzp
       read(304,'(a72)') dum 
-      read(304,*) r8L	
-					
-      read(304,'(a72)') dum 			
+      read(304,'(a72)') dum 
       do i=1,nz
         read(304,*) alpha(i,1), theta_S(i,1), theta_R(i,1),
      &           r8lambda(i,1), r8Ksat(i,1), hinit(i,1)
@@ -1432,7 +1433,7 @@ C     Compute the effective saturation
         Se =  (gtheta - theta_R(k,iveg))/(theta_S(k,iveg) -
      &            theta_R(k,iveg))   
         
-        gK =  r8Ksat(k,iveg)*Se**(r8L)*(1.d0-(1.d0-
+        gK =  r8Ksat(k,iveg)*Se**(0.5d0)*(1.d0-(1.d0-
      &            Se**(1.d0/r8m(k,iveg)))**r8m(k,iveg))**2.d0        
         
         gC =  alpha(k,iveg)*r8n(k,iveg)*(1.d0/r8n(k,iveg)-1.d0)*

@@ -1,6 +1,6 @@
-gravity     dt           
+grav        dt           
 9.806d0     0.001          
-tmax       t_rain    
+tmax      t_rain    
 900       300     
 prate      nt  
 1.38888888889e-05        900000   
@@ -22,7 +22,5 @@ jveg     kveg
 12      4 
 jbare     kbare       
 11       1 
-isweed_theta     isweed_flux  
-1           0 
-iBC      tsat_min 
-1       0 
+tsat_min 
+0 
