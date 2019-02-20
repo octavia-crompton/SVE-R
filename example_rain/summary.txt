@@ -1,6 +1,5 @@
    
  Results summary:
-     runtime =        20.82
+     runtime =       811.84
  1st ponding  =        0.00
-  final time =        90.00
- out of time
+  final time =       900.00

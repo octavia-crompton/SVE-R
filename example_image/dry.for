@@ -1,53 +1,42 @@
       program swe2d
 C======================================================================
-C  SVE (Saint Venant) Compontent
-C.   time variables:
-C         t :  time, ranges from 0 to tmax, updated at start of time step
-C         nt :   number of time steps   (ntp>nt)        
-C         it   : iteration number  
-C         dt   : time increment
-C         itp  : print iteration
-C         tmax : simulation final time
-C         tp  :  time of ponding (printed in console)
-C         nprt : print frequency : SVE output is saved every nprt timesteps, 
+C  Code for a coupled 2D Saint Venant Equation (SVE)- 1D Richards equation model.
+C    See documentation for further information.
+C    This code requires a separate file, "dry.inc", to specify the common variables.
+ 
+C    Notes on timesteps:
+C 	 The SVE and Richards equation are solved with different timesteps, 
+C    because the SVE require small timesteps for stability and the Richards equation 
+C    solver is more time intensive.  The time variables are briefly summarized below. 
+C    Where variable names differ from the companion Python wrapper scripts, the Python 
+C    names are noted in parentheses.
+C
+C         t    :  time (s), ranging from 0 to tmax
+C         tmax :  simulation maximum time
+C         dt   :  SVE time step (python: dt_sw)
+C         nt   :  number of SVE time steps  (tmax/dt) 
+C         ntp  :  space allocated for the time grid (see dry.inc), ntp>nt
+C         it   :  iteration number = t/dt
+C         dtinfl :  infiltration time step (python: dt_r)
+C         iscale :  ratio of Richards equation to SVE timesteps (dt/dt_sw)
+C         dt_p :  "print" timestep (s), specifying how often to save variables
+C                  to output files
+C         nprt :  print frequency : SVE output is saved every nprt timesteps, 
 C               where nprt = dt_p/dt
-C    Richards Parameters: 
-C       nz:   number of soil layers
 C
-C     Common variables for putting infiltration on a new time grid:
-C         iscale :  scale factor for shallow water to infiltration time steps  (probably 10)
-C         dtinfl :  infiltration time step  (dt in python notebook)
+C       Rainfall parameters: 
+C         prate  (m/s) :   rainfall rate  m/s
+C         tr     (s)   :   time when rain stops (s)
 C
-C       Precipitation variables: 
-C         prate(nt)   :  m/s
-C         tr   : time when rain stops
-C       
-C
-C     Common SW variables:
-C        grav  : acceleration due to gravity.
-C        epsh : depth tolerence for dry bed problems.  in m
-C        xni, xnv  :  Manning bed roughness coefficients (interspace and veg)
-C
-C        inum  : number of boundary faces in a boundary cell.
-C        ipos  : orientation of boundary face:=1 bottom:=2 right:=3 top:=4 left.
-C        nbcell : number of boundary cells.
-C   
-C    Common variables for infiltration
-C        flux :  defined in source subroutine, used by timestep subroutine
-C                 if isetflux=1, set flux (in cm/s)
-C
-C    Non-common infiltration variables:
-C        PI  m/s
-C        prate(nt)  cm/s
-C     
-C   Notes:  Richards solver is called in the corrector step.
+C     Common variables:
+C        grav  : acceleration due to gravity (m/s2)
+C        epsh : depth tolerence for dry bed problems (m)
+
+C   Notes (move to source?):  Richards solver is called in the corrector step.
 C           source subroutine sets i (infiltration) for the current and following 
-C           iscale timesteps, via qs.
+C           iscale timesteps.
 C           Once h --> 0, winflt is set to zero.
 C
-C     Flux variables:
-C         f(j,k,,) : m2/s
-C         xflux0, xflux1, yflux0, yflux1:  m3
 ************************************************************************
       include 'dry.inc'    
       
@@ -63,18 +52,17 @@ C     Output files: saved every nprt time steps (dt_p seconds)
       open(101,file= 'output/time.out')                           
       open(100,file= 'output/h.out')                
       open(102,file= 'summary.txt')                  
-      open(103,file= 'output/cfl.out')   
       open(104,file= 'output/hydro.out')  
       open(107,file= 'output/ptsTheta.out')
-      open(110,file= 'output/fluxes1234.out')   ! boundary fluxes      
+      open(110,file= 'output/boundary_fluxes.out')   ! boundary fluxes      
       open(111,file= 'output/dvol.out')  ! SVE volume tracking              
 
 C 	  Richards output files
       call cpu_time(start)       
+
 C      Read input, set up grid, initial conditions.
       call init
       call initvg
-
 
 C     write headings for fortran output files
       write(101,*)  "     time (s) |   CFL  "
@@ -124,7 +112,7 @@ C     Write ICs to output files
 C    Begin time loop.
       do it = 0,nt-1
         t = t + dt
-        if (t .gt. tr) prate = 0.		
+        if (t .gt. t_rain) prate = 0.		
         amax = 0.d0
     
 C       Compute predictor.
@@ -200,7 +188,7 @@ C Check for negative depth.
               h(j,k) = q(j,k,1)
             else
               zinfl = zinfl - q(j,k,1)*area(j,k)
-              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)   							                      
+              zinflmap2(j,k) = zinflmap2(j,k) - q(j,k,1)*area(j,k)
               q(j,k,1) = 0.D0
               h(j,k) = 0.D0
             endif
@@ -267,9 +255,9 @@ C         allf = 0.0
         endif 
          
 C        minimum volume to
-         r8minvol = 0.001d0*epsh*dxdum**2*nrow*ncol
+         r8minvol = 0.01d0*epsh*dxdum**2*nrow*ncol
 
-         if ((vol .le. r8minvol) .and. (t .gt. tr)) then
+         if ((vol .le. r8minvol) .and. (t .gt. t_rain)) then
 
           call gracefulExit  
           write(102,*) 'No more water, t=', t/60
@@ -343,10 +331,11 @@ C        minimum volume to
       subroutine myoutput
       include 'dry.inc'
   
-!      file 101 is 'output/time.out' - to keep track of the time stpes
+C     file 101 is 'output/time.out' - to keep track of the time stpes
       write(101, *) t, amax*dt 
       
-C 	  file 100 is 'output/h.out' 
+C     file 100 is 'output/h.out' 
+	    write(100, 202) "t = ", t
       do j=1,ncol
         do k=kbeg(j),kend(j)
           write(100, 201) j, k, h(j,k), u(j,k), v(j,k),
@@ -355,19 +344,19 @@ C 	  file 100 is 'output/h.out'
           zinflmap2(j,k) = 0.d0       
         enddo
       enddo
-	    write(100, 202) itp, t
+
       
 C    Save H and Theta for two points - one vegetated and one bare
+      write(107, 202) "t = ", t
       do l = 1,nz
           write(107, 203) l,z(l),r8THETA(jveg,kveg,l), 
      &                  r8H(jveg,kveg,l), 
      &                  r8THETA(jbare,kbare,l), 
      &                  r8H(jbare,kbare,l)
       enddo  
-      write(107, 202) itp, t
 
       return
- 202  format(' ', i8, f9.2)
+ 202  format(' ', A8, f9.2)
  201  format(' ', 2i4, 8e15.6) 
  203  format(' ', i4, f8.3, 4e15.6) 
       end
@@ -875,24 +864,14 @@ C   Open boundary.
           udum(jj,kk) = 2.D0*udum(j,k) - udum(j2,k2)
           vdum(jj,kk) = 2.D0*vdum(j,k) - vdum(j2,k2)
                     
-          if (hdum(j,k) .gt. hdum(j2,k2) + 1e-7) then
-          
-            if (iBC .eq. 0) then  ! normal!
-              hdum(jj,kk) = 2.D0*hdum(j,k) - hdum(j2,k2)
-              
-            elseif (iBC .eq. 1) then  ! same depth (not same height)
-              hdum(jj,kk) = hdum(j,k)
-            
-            elseif (iBC .eq. 2) then   ! mirror
-              hdum(jj,kk) = hdum(j2,k2) 
-
-            endif 
-
-          endif
+C           if (hdum(j,k) .gt. hdum(j2,k2) + 1e-7) then
+C               hdum(jj,kk) = hdum(j,k)
+C           endif
                
           
 C Wall boundary.
        elseif(itype(j,k,i) .eq. 1)then
+
           dh(jj,kk,io) = dh(j,k,io)
           du(jj,kk,io) = du(j,k,io)
           dv(jj,kk,io) = dv(j,k,io)
@@ -907,7 +886,6 @@ C Wall boundary.
      &                      2.D0*udum(j,k)*sn(jl,kl,io)*cn(jl,kl,io)
         
 C Specified depth and velocity (supercritical).
-     
        elseif(itype(j,k,i) .eq. 2)then
           
           dh(jj,kk,io) = 0.D0
@@ -919,7 +897,7 @@ C Specified depth and velocity (supercritical).
           if(isurf .eq. 1) hdum(jj,kk) = hdum(jj,kk) - zc(j,k)
       
 C Specified flow rate (subcritical).
-       elseif(itype(j,k,i) .eq. 4)then 
+       elseif((itype(j,k,i) .eq. 4) .and. (t .lt. t_rain)) then 
           du(jj,kk,io) =  0.d0
           dv(jj,kk,io) =  0.d0 
           if(hdum(j,k) .ge. epsh) then
@@ -932,11 +910,27 @@ C Specified flow rate (subcritical).
 	        if(hdum(jj,kk) .ge. epsh) then
             udum(jj,kk) = fix(j,k,2)/hdum(jj,kk)
             vdum(jj,kk) = fix(j,k,3)/hdum(jj,kk)
-			    else
+          else
             udum(jj,kk) = 0.D0
             vdum(jj,kk) = 0.D0
-			    endif        
+          endif   
+C Prescribe wall boundary after t_rain     
+       elseif((itype(j,k,i) .eq. 4) .and. (t .ge. t_rain)) then 
+         dh(jj,kk,io) = dh(j,k,io)
+         du(jj,kk,io) = du(j,k,io)
+         dv(jj,kk,io) = dv(j,k,io)
+         
+         hdum(jj,kk) = 2.D0*hdum(j,k) - hdum(j2,k2)          
+
+         udum(jj,kk) = udum(j,k)*(sn(jl,kl,io)*sn(jl,kl,io) - 
+     &                                 cn(jl,kl,io)*cn(jl,kl,io)) -
+     &                   2.D0*vdum(j,k)*sn(jl,kl,io)*cn(jl,kl,io)
+         vdum(jj,kk) = vdum(j,k)*(cn(jl,kl,io)*cn(jl,kl,io) - 
+     &                      sn(jl,kl,io)*sn(jl,kl,io)) -
+     &                      2.D0*udum(j,k)*sn(jl,kl,io)*cn(jl,kl,io)
+       
        endif
+
 
         if (hdum(jj,kk)  .lt. 0.D0) hdum(jj,kk) = 0
         
@@ -962,18 +956,21 @@ C Specified flow rate (subcritical).
       real ( kind = 8 ) veg(nn)
 
 			area = 0.d0
+			read(2,'(a72)') dum
       read(2,*) np, ne
     	if(np .gt. nn) then
     	  write(*,*) np
         write(*,*) 'ERROR:  parameter nn in file dry.inc is too small'
     	  stop
     	endif
+      read(2,'(a72)') dum
       do i=1,np
         read(2,*) x(i), y(i), zz(i)
       enddo
       do i=1,np
         read(5,*) veg(i)
       enddo 
+			read(11,'(a72)') dum
       do j=1,ncol
         do k=kbeg(j),kend(j)
           read(11,*) (nop(j,k,i), i=1,4)
@@ -1142,7 +1139,7 @@ C Beta Family.
       read(4,'(a72)') dum
       read(4,*) grav, dt
       read(4,'(a72)') dum
-      read(4,*) tmax, tr
+      read(4,*) tmax, t_rain
       read(4,'(a72)') dum
       read(4,*) prate, nt
       read(4,'(a72)') dum      
@@ -1164,7 +1161,7 @@ C Beta Family.
       read(4,'(a72)') dum      
       read(4,*) jbare,  kbare
       read(4,'(a72)') dum 
-      read(4,*) iBC, tsat_min
+      read(4,*) tsat_min
 
 
       ! Read  file 'input/boundary.dat'.
@@ -1255,7 +1252,7 @@ C For fixed flux BCs, must initialize depth.
                   write(*,*) 'flux boundary ', j,k,ipos(j,k,i)
 !                 read(*,*) h(jj,kk)
                   hnorm  = 0.001
-                  h(jj,kk) = hnorm                         
+                  h(jj,kk) = hnorm
                   hp(jj,kk) = hnorm
 	              endif
               endif
@@ -1320,9 +1317,7 @@ C For fixed flux BCs, must initialize depth.
       read(304,'(a72)') dum 
       read(304,*) nzp
       read(304,'(a72)') dum 
-      read(304,*) r8L	
-					
-      read(304,'(a72)') dum 			
+      read(304,'(a72)') dum 
       do i=1,nz
         read(304,*) alpha(i,1), theta_S(i,1), theta_R(i,1),
      &           r8lambda(i,1), r8Ksat(i,1), hinit(i,1)
@@ -1419,7 +1414,7 @@ C     Define matrices that we'll need in solution
       !   vanGenuchten parameters
       !
       !   Input:
-      !             k  (integer)  -  soil layer                          
+      !             k  (integer)  -  soil layer
       !             gh (real, kind = 8)    -  dimension
       !   Output:
       !             gtheta  (real, kind= 8) - volumetric moisture content
@@ -1437,7 +1432,7 @@ C     Compute the effective saturation
         Se =  (gtheta - theta_R(k,iveg))/(theta_S(k,iveg) -
      &            theta_R(k,iveg))   
         
-        gK =  r8Ksat(k,iveg)*Se**(r8L)*(1.d0-(1.d0-
+        gK =  r8Ksat(k,iveg)*Se**(0.5d0)*(1.d0-(1.d0-
      &            Se**(1.d0/r8m(k,iveg)))**r8m(k,iveg))**2.d0        
         
         gC =  alpha(k,iveg)*r8n(k,iveg)*(1.d0/r8n(k,iveg)-1.d0)*

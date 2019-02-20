@@ -1,5 +1,6 @@
    
  Results summary:
-     runtime =       759.55
+     runtime =       551.39
  1st ponding  =        0.00
-  final time =       900.00
+  final time =       600.00
+ No more water, t=   9.9999999998787299     

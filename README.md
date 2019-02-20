@@ -4,24 +4,31 @@ The core of the SVE-R model is in dry.f, and a number of python wrapper function
 
 __Quick start__
 
+From a bash terminal: 
+
 1. Create a subfolder `test`, containing a params.json file (see example subfolders for examples).  
 2. Open a terminal and nagivate to the model directory.
 3. Call the command: `python call_dry.py test`
 
+If the above lines throw an error, it is likeley because the Python things differed. Try creating a virtual environmentand installing the same python library versions:
 
-__ Installing Python dependencies__
-`conda create -n o_env  python=2.7 ipykernel'
-`source activate ipykernel_py2`    # On Windows, remove the word 'source'
-`python -m ipykernel install --user
-More details in the documentation:  https://ipython.readthedocs.io/en/stable/install/kernel_install.html
+__Installing Python dependencies__
 
 The required Python libraries can be installed from the requirements file `requirements.txt` with pip:
 `pip install -r requirements.txt`
 
+To create a virtual environment that is compatible with the jupyter notebook files:
+
+`conda create -n o_env  python=2.7 ipykernel'
+`source activate ipykernel_py2`    # On Windows, remove the word 'source'
+`python -m ipykernel install --user
+
+More details in the documentation:  https://ipython.readthedocs.io/en/stable/install/kernel_install.html
+
 
 Notes:
 - The Fortran code requires the accelerate framework.
-- Python package requirements can be found in `requirements.txt`.  
+
 
 
 __List of files:__
