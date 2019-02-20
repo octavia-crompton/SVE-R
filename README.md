@@ -19,7 +19,7 @@ The required Python libraries can be installed from the requirements file `requi
 
 To create a virtual environment that is compatible with the jupyter notebook files:
 
-`conda create -n o_env  python=2.7 ipykernel'
+`conda create -n o_env  python=2.7 ipykernel`
 `source activate ipykernel_py2`    # On Windows, remove the word 'source'
 `python -m ipykernel install --user
 
