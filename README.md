@@ -10,25 +10,25 @@ From a bash terminal:
 2. Open a terminal and nagivate to the model directory.
 3. Call the command: `python call_dry.py test`
 
-If the above lines throw an error, it is likeley because the Python things differed. Try creating a virtual environmentand installing the same python library versions:
+If the above lines throw an error, it is likely due a difference in Python or Fortran versions.
 
-__Installing Python dependencies__
 
-The required Python libraries can be installed from the requirements file `requirements.txt` with pip:
-`pip install -r requirements.txt`
+The Fortran code was developed using a gfortran compiler, and has not been tested on other compilers.  Additionally, it requires the [accelarate](https://sites.ualberta.ca/~kbeach/lapack.html "Title") framework:
 
-To create a virtual environment that is compatible with the jupyter notebook files:
+__Python dependencies__
 
-`conda create -n o_env  python=2.7 ipykernel`
+The Python wrapper scripts and Jupyter notebooks use Python 2.7 and the libraries listed in `requirements.txt`.  
+The easiest way to match environments is to create a virtual environment and install the required Python libraries with pip:
+
+  `pip install -r requirements.txt`
+
+To create a virtual environment that is compatible with the Jupyter notebook examples:
+
+`conda create -n o_env  python=2.7 ipykernel` 
 `source activate ipykernel_py2`    # On Windows, remove the word 'source'
-`python -m ipykernel install --user
+`python -m ipykernel install --user`
 
-More details in the documentation:  https://ipython.readthedocs.io/en/stable/install/kernel_install.html
-
-
-Notes:
-- The Fortran code requires the accelerate framework.
-
+Please refer to the Conda documentation for [more details](https://ipython.readthedocs.io/en/stable/install/kernel_install.html "Title")
 
 
 __List of files:__
