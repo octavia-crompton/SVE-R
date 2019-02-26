@@ -1,7 +1,18 @@
       program swe2d
 C======================================================================
-C  Code for a coupled 2D Saint Venant Equation (SVE)- 1D Richards equation model.
-C    See documentation for further information.
+C    This program uses a finite volume discretization to solve the
+C    2D Saint Venant Equations (SVE) on an arbitrary mesh consisting of
+C    quadrilaterals.  The 2D SVE are coupled to a 1D Richards equation at each grid cell and timetep.
+C    Please see the documentation for further information.
+C	   
+C    SVE solver details:
+C    Roe's Approximate Riemann Solver is used along
+C    with a MUSCL reconstruction of primitive variables to obtain
+C    2nd order accuracy in space.  Hancock's	Predictor-Corrector method  
+C    is used to acheive 2nd order accuracy in time.  The model can handle
+C    a variably sloping bed as well as wetting and drying in the domain.
+C    Bed drag is parameterized by the Manning equation.  
+C
 C    This code requires a separate file, "dry.inc", to specify the common variables.
  
 C    Notes on timesteps:
@@ -32,7 +43,7 @@ C     Common variables:
 C        grav  : acceleration due to gravity (m/s2)
 C        epsh : depth tolerence for dry bed problems (m)
 
-C   Notes (move to source?):  Richards solver is called in the corrector step.
+C     Notes (move to source?):  Richards solver is called in the corrector step.
 C           source subroutine sets i (infiltration) for the current and following 
 C           iscale timesteps.
 C           Once h --> 0, winflt is set to zero.

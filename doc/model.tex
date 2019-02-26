@@ -3,7 +3,7 @@
 \usepackage[inner=3cm,outer=3cm]{geometry} %left=4cm,right=2cm would be equivalent
 \usepackage[utf8]{inputenc}
 %\usepackage{hyperref}
-\usepackage{natbib}
+%\usepackage{natbib}
 \usepackage{amsmath}
 \usepackage{parskip}
 \usepackage{graphicx}
@@ -762,6 +762,24 @@ Additionally, several template notebooks are included to process the SVE-R simul
 %The stand-alone 1D Richards equation solver is structured as a class \code{Richards}, which takes as input a parameter dictionary \code{params}. 
 
 
+\section{Feature code}
+
+Code to generate the features used to train the random forests is provided in \code{feature\_functions.py}, with the Jupyter notebook \code{example\_features.ipynb} provided to interface with the results.
+Within \code{RF\_patterns.py}, the  function \code{get\_feature\_matrix} takes an input binary (im)permeability pattern and returns a matrix of features, where each row corresponds to a grid cell in the input pattern.
+
+
+
+ \begin{thebibliography}{}
+ \bibitem[{\textit{Kobayashi et~al.}}(2003)]{R2013} Kobayashi, T.,
+ Tran, A.~H., Nishijo, H., Ono, T., and Matsumoto, G.  (2003).
+ Contribution of hippocampal place cell activity to learning and
+ formation of goal-directed navigation in rats. \textit{Neuroscience}
+ 117, 1025--1035.
+
+ \bibitem{}
+ Text
+ \end{thebibliography}
+
 
 \section{Appendix A: Relating \code{dry.f} code to SVE-R equations }
 
@@ -957,7 +975,7 @@ Similarly, \code{i1 = 2} indicates that the flux is between horizontal cell face
 
 %% equations from BK are reproduced here in order to relate these equations to  the Fortran code.t
 
-\subsubsection*{Solver subroutine}
+\subsubsection*{The solver subroutine}
 
 This subroutine uses the monotone upstream scheme for conservation laws (MUSCL) to compute $\mathbf{F_\perp}$ at each cell face.  The code in \code{solver} corresponds to the Equation \ref{riemann} as: 
 
@@ -1019,7 +1037,7 @@ This subroutine uses the monotone upstream scheme for conservation laws (MUSCL) 
  \end{itemize}
  
 
-\subsection{The \code{source} subroutine}
+\subsection{The source subroutine}
 
 % Infiltration and surface resistance are represented in 
  The source term is computed with the subroutine \code{source}, which modifies the common variable \code{qs} (or $Q(j,k)$).
