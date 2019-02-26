@@ -66,19 +66,26 @@
 
 \section{Introduction}
 
-This model couples two pre-existing models: a 2D SVE solver [\textit{Bradford and Katopodes}, 1999] and a 1D Richards equation solver [\textit{Celia et al.}, 1990].	
-The SVE solver uses a finite volume method involving two steps, predictor and corrector, to achieve second-order accuracy.  The SVE model is coupled at each grid cell and timestep to the Richards equation solver.
-The core of the model is implemented in Fortran  (\code{dryR.for}), and Python  scripts are provided to write and read the Fortran files.
- 
+The SVE-R model couples the 2D Saint Venant Equations (SVE), also known as the shallow water equations, to a 1D Richards equation solver for infiltration.  The SVE solver is adapted from the model presented in \textit{Bradford and Katopodes} (1999), henceforth BK1999, which uses a finite volume discretization to solve the 2D SVE on an arbitrary mesh consisting of quadrilaterals.   The SVE solver uses Hancock's predictor-corrector method  to achieve 2nd order accuracy in time, and Roe's Approximate Riemann Solver along with a MUSCL reconstruction of primitive variables to obtain 2nd order accuracy in space.   The model can handle a variably sloping bed, as well as wetting and drying in the domain.
+
+The principal difference between  BK1999's model and the SVE-R model documented here is that infiltration is represented by solving Richards equation in 1D at each grid cell and timestep.  The 1D Richards equation was implemented using the algorithm described by  \textit{Celia et al.} (1990).  
+
+
+The core of the model is implemented in Fortran  (\code{dryR.for}), and Python scripts are provided to write and read the Fortran files.
+  
 This document is divided into the following sections:
 
 \begin{itemize}
 	\item Section \ref{SVE}: A brief summary of the Saint Venant and Richards Equations.
 	\item Section \ref{SVE_solver}:  An overview the SVE-R numerical methods, and how the two model components are coupled. 
 %	\item  Infiltration and flow resistance are represented in the source term $Q$.
-	\item Section \ref{}: An overview of the Python wrapper scripts,  which write the Fortran input files, compile and execute the Fortran code, and read and visualize the Fortran outputs. 
+	\item Section \ref{domain}: A summary of the simulation domain (i.e. the specific scenario of rain driven overland flow on patchily vegetated hillslopes which the model is configured to solve).
+	\item   Section \ref{python_wrap}: An overview of the Python wrapper scripts,  which write the Fortran input files, compile and execute the Fortran code, and read and visualize the Fortran outputs. 
 \end{itemize}		
 
+\textbf{DISCLAIMER}:
+The model is published with the permission of Bradford and Katopodes, and the documentation closely follows BK1999 and  \textit{Bradford and Katopodes} (2001), henceforth BK2001. For further information and detail, please refer to these papers.  Parts of Sections \ref{SVE} and \ref{SVE_solver} are reproduced verbatim from BK1999 and BK2001, because their wording is are clearer and more precise than ours would be.  To be clear, we are not claiming that the SVE solver is original work.  Also note that the original BK1999 model is not available open source.
+  
 \section{Background: equations and numerical methods }
 \label{SVE}
 
@@ -130,9 +137,8 @@ where $p$ is the rainfall rate,   $i$ is the infiltration rate of water into the
 
 \subsection{SVE numerical methods}
 
- The model is adapted from  \textit{Bradford and Katopodes} (1999), referred to here as BK, 
-  and uses predictor-corrector time-stepping to provide a second-order accurate solution.
- The only significant difference between the BK model and the model described here is the coupling to a Richards equation solver.  The following summary of the numerical methods is adapted from \textit{Bradford and Katopodes} (1999), where a better and more complete explanation can be found. 
+ The model is adapted from  \textit{Bradford and Katopodes} (1999), referred to here as BK1999,  which uses predictor-corrector time-stepping to provide a second-order accurate solution.
+%  The following summary of the numerical methods is adapted from \textit{Bradford and Katopodes} (1999), where a better and more complete explanation can be found. 
   
   A predictor is computed at  time level $n + 1/2$ by solving the primitive equations in generalized coordinates, and a corrector is computed at the $n + 1$ time level by solving the integral equations.  
    
@@ -580,8 +586,7 @@ The van Genuchten parameters and vertical structure of the soil can be modified 
 
 
 \section{Python wrapper scripts}
-
-
+\label{python_wrap}
 
 \begin{itemize}
 \item \code{write\_nodes(path, ncol, nrow)  }: writes the cell node indices to \code{input/nodes.dat}.  
@@ -767,7 +772,9 @@ Within \code{RF\_patterns.py}, the  function \code{get\_feature\_matrix} takes a
  \begin{thebibliography}{}
  \bibitem{bradford1999hydrodynamics} Bradford, S. F., \& Katopodes, N. D. (1999). Hydrodynamics of turbid underflows. I: Formulation and numerical analysis. Journal of hydraulic engineering, 125(10), 1006-1015.
 
- \bibitem{bradford2001finite} Bradford, S. F., & Katopodes, N. D. (2001). Finite volume model for nonlevel basin irrigation. Journal of irrigation and drainage engineering, 127(4), 216-223. https://doi.org/10.1061/(ASCE)0733-9437(2001)127:4(216)
+ \bibitem{bradford2001finite} Bradford, S. F., \& Katopodes, N. D. (2001). Finite volume model for nonlevel basin irrigation. Journal of irrigation and drainage engineering, 127(4), 216-223. https://doi.org/10.1061/(ASCE)0733-9437(2001)127:4(216)
+ 
+ \bibitem{celia1990general} Celia, M. A., Bouloutas, E. T., \& Zarba, R. L. (1990). A general mass‐conservative numerical solution for the unsaturated flow equation. Water resources research, 26(7), 1483-1496.  https://doi.org/10.1029/WR026i007p01483
  \end{thebibliography}
 
 
