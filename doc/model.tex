@@ -76,9 +76,7 @@ This document is divided into the following sections:
 	\item Section \ref{SVE}: A brief summary of the Saint Venant and Richards Equations.
 	\item Section \ref{SVE_solver}:  An overview the SVE-R numerical methods, and how the two model components are coupled. 
 %	\item  Infiltration and flow resistance are represented in the source term $Q$.
-	\item Section 3: An overview of the Python wrapper scripts,  which write the Fortran input files, compile and execute the Fortran code, and read and visualize the Fortran outputs. 
-	\item  Additional Python code: a stand-alone Richards solver 
-	\item  Additional Python code: an implementation of \citet{GW1996}.
+	\item Section \ref{}: An overview of the Python wrapper scripts,  which write the Fortran input files, compile and execute the Fortran code, and read and visualize the Fortran outputs. 
 \end{itemize}		
 
 \section{Background: equations and numerical methods }
@@ -557,10 +555,8 @@ If the potential infiltration rate is less than the rainfall rate (\code{(PI .lt
 
 
 	
-
-
 \section{The Simulated Domain}
-
+\label{domain}
 To simulate runoff/runon environments on patchily-vegetated hillslopes, several aspects of the BK model have been modified (in addition to coupling to a 1D Richards solver).  This section describes the simulated domain, as illustrated in Figure \ref{domain_schematic}.
 
  \begin{figure}[h]
@@ -770,11 +766,7 @@ Within \code{RF\_patterns.py}, the  function \code{get\_feature\_matrix} takes a
 
 
  \begin{thebibliography}{}
- \bibitem[{\textit{Kobayashi et~al.}}(2003)]{R2013} Kobayashi, T.,
- Tran, A.~H., Nishijo, H., Ono, T., and Matsumoto, G.  (2003).
- Contribution of hippocampal place cell activity to learning and
- formation of goal-directed navigation in rats. \textit{Neuroscience}
- 117, 1025--1035.
+ \bibitem{bradford1999hydrodynamics} Bradford, S. F., \& Katopodes, N. D. (1999). Hydrodynamics of turbid underflows. I: Formulation and numerical analysis. Journal of hydraulic engineering, 125(10), 1006-1015.
 
  \bibitem{}
  Text

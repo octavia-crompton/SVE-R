@@ -25,7 +25,7 @@ The easiest way to match environments is to create a virtual environment and ins
 To create a virtual environment that is compatible with the Jupyter notebook examples:
 
 `conda create -n o_env  python=2.7 ipykernel`  
-`source activate ipykernel_py2`    # On Windows, remove the word 'source'   
+`source activate o_env`    # On Windows, remove the word 'source'   
 `python -m ipykernel install --user`   
 
 Please refer to the Conda documentation for [more details](https://ipython.readthedocs.io/en/stable/install/kernel_install.html "Title")
