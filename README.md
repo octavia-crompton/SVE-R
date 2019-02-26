@@ -7,7 +7,7 @@ __Quick start__
 From a bash terminal: 
 
 1. Create a subfolder `test`, containing a params.json file (see example subfolders for examples).  
-2. Open a terminal and nagivate to the model directory.
+2. Open a terminal and navigate to the model directory.
 3. Call the command: `python call_dry.py test`
 
 If the above lines throw an error, it is likely due a difference in Python or Fortran versions.
@@ -54,8 +54,8 @@ Other files:
 - feature\_example.ipynb : contains visualizations of the features.
 
 Examples: 
-* example\_2by2:  illustrates the grid contruction for a 2x2 rectangular grid (described in more detail in the 
- [documentation](https://github.com/octavia-crompton/SVE-R/blob/master/doc/model.pdf "Title")
+* example\_2by2:  illustrates the grid construction for a 2x2 rectangular grid (described in more detail in the 
+ [documentation](https://github.com/octavia-crompton/SVE-R/blob/master/doc/model.pdf "Title")).
 * example\_image: rain driven overland flow on a planar hillslope with the vegetation field read from an image file.
 * example\_inflow: overland flow on a planar hillslope supplied by a fixed-flux boundary condition at the top of the hillslope.   
 * example\_rain:  rain driven overland flow on a planar hillslope with the randomly-generated vegetation field.
