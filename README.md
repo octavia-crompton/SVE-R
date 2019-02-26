@@ -13,7 +13,7 @@ From a bash terminal:
 If the above lines throw an error, it is likely due a difference in Python or Fortran versions.
 
 
-The Fortran code was developed using a gfortran compiler, and has not been tested on other compilers.  Additionally, it requires the [accelarate](https://sites.ualberta.ca/~kbeach/lapack.html "Title") framework:
+The Fortran code was developed using a gfortran compiler, and has not been tested on other compilers.  Additionally, it requires the [accelerate](https://sites.ualberta.ca/~kbeach/lapack.html "Title") framework:
 
 __Python dependencies__
 
