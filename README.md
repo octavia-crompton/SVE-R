@@ -4,7 +4,7 @@ The core of the SVE-R model is in dry.f, and a number of python wrapper function
 
 __Quick start__
 
-From a bash terminal: 
+First install the Python dependencies and gfortran compiler (see sections below).  Then,from a bash terminal: 
 
 1. Create a subfolder `test`, containing a params.json file (see example subfolders for examples).  
 2. Open a terminal and navigate to the model directory.
@@ -12,21 +12,21 @@ From a bash terminal:
 
 If the above lines throw an error, it is likely due a difference in Python or Fortran versions.
 
-
 The Fortran code was developed using a gfortran compiler, and has not been tested on other compilers.  Additionally, it requires the [accelerate](https://sites.ualberta.ca/~kbeach/lapack.html "Title") framework:
 
 __Python dependencies__
 
 The Python wrapper scripts and Jupyter notebooks use Python 2.7 and the libraries listed in `requirements.txt`.  
-The easiest way to match environments is to create a virtual environment and install the required Python libraries with pip:
-
-  `pip install -r requirements.txt`
+The easiest way to match environments is to create a virtual environment and install the required Python libraries.
 
 To create a virtual environment that is compatible with the Jupyter notebook examples:
 
 `conda create -n o_env  python=2.7 ipykernel`  
 `source activate o_env`    # On Windows, remove the word 'source'   
-`python -m ipykernel install --user`   
+`python -m ipykernel install --user`  
+
+To install the required Python libraries:  
+  `pip install -r requirements.txt` 
 
 Please refer to the Conda documentation for [more details](https://ipython.readthedocs.io/en/stable/install/kernel_install.html "Title")
 
