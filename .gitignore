@@ -3,7 +3,6 @@
 .ipynb_checkpoints
 .gitignore
 Icon?
-*.pklz
 */output
 *.pyc
 *.aux
