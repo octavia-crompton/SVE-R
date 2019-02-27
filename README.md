@@ -6,7 +6,7 @@ __Quick start__
 
 First install the Python dependencies and gfortran compiler (see sections below).  Then,from a bash terminal: 
 
-1. Create a subfolder `test`, containing a params.json file (see example subfolders for examples).  
+1. Create a subfolder `test` in the model directory, containing a params.json file (see example subfolders for examples).  
 2. Open a terminal and navigate to the model directory.
 3. Call the command: `python call_dry.py test`
 
