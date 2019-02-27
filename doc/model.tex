@@ -84,7 +84,7 @@ This document is divided into the following sections:
 \end{itemize}		
 
 \textbf{DISCLAIMER}:
-The model is published with the permission of Bradford and Katopodes, and the documentation closely follows BK1999 and  \textit{Bradford and Katopodes} (2001), henceforth BK2001. For further information and detail, please refer to these papers.  Parts of Sections \ref{SVE} and \ref{SVE_solver} are reproduced verbatim from BK1999 and BK2001, because their wording is are clearer and more precise than ours would be.  To be clear, we are not claiming that the SVE solver is original work.  Also note that the original BK1999 model is not available open source.
+The model is published with the permission of Bradford and Katopodes, and the documentation closely follows BK1999 and  \textit{Bradford and Katopodes} (2001), henceforth BK2001. For further information and detail, please refer to these papers.  Parts of Sections \ref{SVE} and \ref{SVE_solver} are reproduced verbatim from BK1999 and BK2001, because their wording is are clearer and more precise than ours would be.  We are not claiming that the SVE solver is original work.  Also note that the original BK1999 model is not available open source.
   
 \section{Background: equations and numerical methods }
 \label{SVE}
@@ -731,7 +731,6 @@ Additionally, several template notebooks are included to process the SVE-R simul
 
 \begin{itemize}
 	\item \code{example\_mass\_balance.ipynb}: Check mass balance in the SVE-R model. 
-	\item 
 \end{itemize}
 
 %\subsubsection*{Template notebooks to view / modify how the SVE-R inputs are constructed}
@@ -775,6 +774,8 @@ Within \code{RF\_patterns.py}, the  function \code{get\_feature\_matrix} takes a
  \bibitem{bradford2001finite} Bradford, S. F., \& Katopodes, N. D. (2001). Finite volume model for nonlevel basin irrigation. Journal of irrigation and drainage engineering, 127(4), 216-223. https://doi.org/10.1061/(ASCE)0733-9437(2001)127:4(216)
  
  \bibitem{celia1990general} Celia, M. A., Bouloutas, E. T., \& Zarba, R. L. (1990). A general mass‐conservative numerical solution for the unsaturated flow equation. Water resources research, 26(7), 1483-1496.  https://doi.org/10.1029/WR026i007p01483
+
+ \bibitem{pedregosa2011scikit} Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., ... \& Vanderplas, J. (2011). Scikit-learn: Machine learning in Python. Journal of machine learning research, 12(Oct), 2825-2830.
  \end{thebibliography}
 
 
@@ -1310,7 +1311,7 @@ These variables are written for every grid cell, every \code{nprt} timesteps (i.
  \begin{figure}[h]
  \centering
 \includegraphics[width=35pc]{grid/h_out.png}
- \caption{Screenshot of a sample \code{h.out} file.}
+ \caption{Screenshot of a sample \	code{h.out} file.}
  \label{h.out_example}
  \end{figure}
   
@@ -1333,7 +1334,7 @@ Columns are \code{dvol, flux, infl} containing the  change in surface volume, ho
 
 
 
-\section*{Appendix C : \code{dry.f} pseudocode}
+\section{Appendix C : \code{dry.f} pseudocode}
 
 \subsection{ Model overview/summary}
 
