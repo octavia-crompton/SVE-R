@@ -1,6 +1,6 @@
 __Brief summary__
 
-The core of the SVE-R model is in dry.f, and a number of python wrapper functions are provided to facilitate its use.  Please refer to documentation (model.pdf) for further details on the SVE-R model and python scripts.
+The core of the SVE-R model is in dry.f, and a number of python wrapper functions are provided to facilitate its use.  Please refer to documentation (doc/model.pdf) for further details on the SVE-R model and python scripts.
 
 __Quick start__
 
