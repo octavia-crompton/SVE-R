@@ -66,7 +66,7 @@
 
 \section{Introduction}
 
-The SVE-R model couples the 2D Saint Venant Equations (SVE), also known as the shallow water equations, to a 1D Richards equation solver for infiltration.  The SVE solver is adapted from the model presented in \textit{Bradford and Katopodes} (1999), henceforth BK1999, which uses a finite volume discretization to solve the 2D SVE on an arbitrary mesh consisting of quadrilaterals.   The SVE solver uses Hancock's predictor-corrector method  to achieve 2nd order accuracy in time, and Roe's Approximate Riemann Solver along with a MUSCL reconstruction of primitive variables to obtain 2nd order accuracy in space.   The model can handle a variably sloping bed, as well as wetting and drying in the domain.
+The SVE-R model couples the 2D Saint Venant Equations (SVE), also known as the shallow water equations, to a 1D Richards equation solver for infiltration.  The SVE solver is adapted from the model presented in Bradford and Katopodes (1999), referenced here as BK1999, which uses a finite volume discretization to solve the 2D SVE on an arbitrary mesh consisting of quadrilaterals.   The SVE solver uses Hancock's predictor-corrector method  to achieve 2nd order accuracy in time, and Roe's Approximate Riemann Solver along with a MUSCL reconstruction of primitive variables to obtain 2nd order accuracy in space.   The model can handle a variably sloping bed, as well as wetting and drying in the domain.
 
 The principal difference between  BK1999's model and the SVE-R model documented here is that infiltration is represented by solving Richards equation in 1D at each grid cell and timestep.  The 1D Richards equation was implemented using the algorithm described by  \textit{Celia et al.} (1990).  
 
@@ -77,7 +77,7 @@ This document is divided into the following sections:
 
 \begin{itemize}
 	\item Section \ref{SVE} provides a brief summary of the Saint Venant Equations, Richards Equation and how the equations are coupled.
-	\item Section \ref{SVE_solver} overviews the Fortran code, including the  auxiliary input/output files and important subroutines.
+	\item Section \ref{SVE_solver} overviews the Fortran code, including the  au	xiliary input/output files and important subroutines.
 	\item Section \ref{domain} describes the simulation domain (i.e. the specific scenario of rain driven overland flow on patchily vegetated hillslopes which the model is configured to solve).
 	\item  Section \ref{python_wrap} overviews of the Python wrapper scripts,  which can be used to write the Fortran input files, compile and execute the Fortran code, and read and visualize the results.
 	\item Section \ref{select_examples} lists the simulation examples provided as templates.
@@ -141,11 +141,11 @@ where $p$ is the rainfall rate,   $i$ is the infiltration rate of water into the
  The model is adapted from  \textit{Bradford and Katopodes} (1999), referred to here as BK1999,  which uses predictor-corrector time-stepping to provide a second-order accurate solution.
 %  The following summary of the numerical methods is adapted from \textit{Bradford and Katopodes} (1999), where a better and more complete explanation can be found. 
   
-  A predictor is computed at  time level $n + 1/2$ by solving the primitive equations in generalized coordinates, and a corrector is computed at the $n + 1$ time level by solving the integral equations.  
+  A predictor solution is computed at  time level $n + 1/2$ by solving the primitive equations in generalized coordinates, and a corrector is computed at the $n + 1$ time level by solving the integral equations.  
    
  \subsubsection*{Predictor Step}
 
- The predictor solution is computed by solving the equations in primitive form. In generalized coordinates:
+In generalized coordinates, the SVE  are given as: 
 
 \begin{equation}
 \dfrac{\partial \mathbf{W}}{\partial t} + 
@@ -156,7 +156,7 @@ where $p$ is the rainfall rate,   $i$ is the infiltration rate of water into the
 \end{equation}
 
 \noindent where $\xi$ and $\eta$ are in the directions of increasing $j$ and $k$ indices, respectively.
-The  $j$,$k$ indices indicate the column and row numbers of a given cell, respectively (see Figure \ref{coords} schematic).
+The  $j$, $k$ indices indicate the column and row numbers of a given cell, respectively (see Figure \ref{coords} schematic).
 $\mathbf{W_T} = [h, U, V]$ is the array of primitive variables, and the matrices $\mathbf{A}_W$ and $\mathbf{B}_W$ are defined as:
 
 \[ \mathbf{A}_w = 
@@ -205,7 +205,7 @@ The predictor solution in cell $j$, $k$ at $t + \Delta t/2$  is given as:
  
  The predictor solutions are reconstructed to the left and right of each cell face using the monotone upstream scheme for conservation laws (MUSCL), which achieves second-order spatial accuracy.  The reconstructed predictor values define a Reimann problem at each cell face, which are used to compute the interfacial fluxes:
  
-\begin{equation} \nonumber
+\begin{equation} 
 	\dfrac{\mathbf{U}_{j,k}^{n+1} -\mathbf{U}_{j,k}^{n}}{\Delta t} 
 	+ \dfrac{1}{\Omega_{j,k}} \big[ 
 		- \mathbf{F}_{\perp 1}^{n+1/2} \Delta s_1
@@ -218,7 +218,7 @@ The predictor solution in cell $j$, $k$ at $t + \Delta t/2$  is given as:
 \noindent where $\mathbf{Q}$ and $\mathbf{U}$ are the cell-center values in cell $j,k$ with area $\Omega$, $\mathbf{F}$ and $\mathbf{G}$ are the average boundary values on each cell face, and $\delta s$ is the length of the cell faces.
 The indices 1 through 4 denote the four cell faces: index 1 corresponds to the bottom cell face, and the remaining cell faces are numbered in counter-clockwise order.
 
-The flux $\mathbf{F}$  is normal to the cell boundary and positive in the direction of increasing cell coordinates.  $\mathbf{F}$  is defined as:
+The flux $\mathbf{F}_\perp$  is normal to the cell boundary and positive in the direction of increasing cell coordinates.  $\mathbf{F}_\perp$  is defined as:
 
 \[ \mathbf{F}_\perp = 
 \begin{bmatrix} 
@@ -230,40 +230,7 @@ The flux $\mathbf{F}$  is normal to the cell boundary and positive in the direct
 
 where $u_\perp$ is the velocity perpendicular to the cell face, and $\phi$ is the angle between the face normal vector and the $x$-axis.
 
-The fluxes are evaluated using a Godunov-type upwind scheme in which a Riemann problem is solved across each cell face, using the method of Roe (1981).  Further details can be found in BK. 
-%The scheme is summarized with the equation:
-%
-%\begin{equation} 
-%\mathbf{F}_{\perp I} = \frac{1}{2} (\mathbf{F}_{\perp L} + \mathbf{F}_{\perp R }- \mathbf{\hat{R}} |\mathbf{\hat{\Lambda}} |\mathbf{\Delta \hat{V}}  )
-%\label{riemann}
-%\end{equation}
-%where the subscript $I$ denotes the interface between two adjacent cells, and the subscripts $L$ and $R$ refer to the left and right sides of the interface.  $\Delta$ is the finite difference across the cell interface. 
-
-% Predicted values to the left and right of each face in a cell are first reconstructed, i.e. at the right cell face:
-% \begin{equation}
-% \mathbf{W}_{j+1/2,k}^{n+1/2L}  = \mathbf{W}_{j,k}^{n+1/2L} + \frac{1}{2} \overline{\Delta W_\xi}|_{j,k}^n
-%  \end{equation}
-
-% The fluxes are computed with Roe’s approximate Riemann solver and the monotone upstream scheme for conservation laws.
-% 
-%
-%The flux $\mathbf{F}_\perp$ is positive in the direction of increasing computational coordinates, normal to the cell boundary, and described as: 
-%
-%\[ \mathbf{F}_\perp = 
-%\begin{bmatrix}
-%	 \code{h $U_\perp$} \\
-%	 \code{h U U_\perp + \frac{1}{2} g h^2 \cos \phi} \\
-%	 \code{h V U_\perp + \frac{1}{2} g h^2 \sin \phi} \\
-%\end{bmatrix} 
-% =  {
-%	 \begin{bmatrix}
-%	 \code{h U_\perp} \\
-%	 \code{h U U_\perp + \frac{1}{2} g h^2 \cos \phi} \\
-%	 \code{h V U_\perp + \frac{1}{2} g h^2 \sin \phi} \\
-%\end{bmatrix} 
-%}  \]
-%
-%where $U_\perp$ (\code{uperp}) is the velocity perpendicular to the cell face, and 
+The fluxes are evaluated using a Godunov-type upwind scheme in which a Riemann problem is solved across each cell face, using the method of Roe (1981).  Further details can be found in BK.
 
 
 \subsubsection*{The source term }
@@ -293,7 +260,7 @@ S_{f,y} = \dfrac{\alpha^2 }{h^m} V |U|
 
 \subsection{Richards equation}
 
-Richards equation is solved following the approach outlined by \textit{Celia et al.} (1990), which involves a backward Euler approximation in time coupled with a simple Picard iteration scheme.  
+Richards equation is solved following the approach outlined by Celia et al. (1990), which involves a backward Euler approximation in time coupled with a simple Picard iteration scheme.  
 The solver used the discrete approximation of the  mixed $H$-$\theta$ form: 
 
 \begin{equation} 
@@ -302,7 +269,7 @@ The solver used the discrete approximation of the  mixed $H$-$\theta$ form:
 \end{equation}
 
 \noindent where $z$ denotes the vertical dimension (assumed positive upwards),  $\theta$ is the soil moisture content, $H$ is the matric potential and $K$ is the unsaturated hydraulic conductivity.
- $\theta$ and matric potential $H$ are related via the Van Genuchten water retention curve. The volumetric soil moisture content, $\theta$, and effective saturation, $S_e$, are computed as:
+ $\theta$ and $H$ are related via the Van Genuchten water retention curve. The volumetric soil moisture content, $\theta$, and effective saturation, $S_e$, are computed as:
 
 \begin{eqnarray} \nonumber
 \theta = \dfrac{\theta_S – \theta_R}{1 + (\alpha|H|)^n)^m} + \theta_R
@@ -329,16 +296,7 @@ q =-  K \bigg(\dfrac{\partial H}{\partial z} + 1\bigg)
 \label{darcy}
 \end{equation}
 
-where the 1  (second term) on the RHS of Equation \ref{darcy} reflects the fact that $H$ is the matric head, as opposed to the hydraulic head.
-
-%Equation \ref{richards} is approximated as:
-%\begin{equation} 
-%	\dfrac{\theta^{n+1,m+1} - \theta^{n}} {\Delta t}  - \dfrac{\partial}{\partial z} \bigg( K^{n+1, m} 	\dfrac{\partial H^{n+1,m+1}} {\partial z}  \bigg) - 	\dfrac{\partial K^{n+1,m}} {\partial z}  = 0
-%\label{celia14}
-%\end{equation}
-%
-% where $n$ represents the time level and $m$ represents the iteration level  (note: the conflicting $n$ and $m$ in equation \ref{celia14} follow \textit{Celia et al.} (1990)).
-% 
+where the 1  (second term) on the RHS reflects the fact that $H$ is the matric head, as opposed to the hydraulic head.
 
 \subsection{Coupling the SVE and Richards equation models}
 
@@ -359,14 +317,14 @@ The model components are coupled at each grid cell in two steps: the depth from 
 
 \section{SVE-R Fortran code}
 
-This section outlines the structure of the Fortran code, how to compile and execute it, and the required input files.  Further details on the the SVE and Richards equation solvers, particularly those relating the mathematical equations in Section 2 to the code in the Fortran subroutines, can be found in Appendix A.
+This section outlines the structure of the Fortran code, how to compile and execute it, and the required input files.  Further details on the the SVE and Richards equation solvers, particularly those relating the mathematical equations in Section 2 to the Fortran code, can be found in Appendix A.
 
 \label{SVE_solver}
 
 
 \subsection{SVE-R model structure}
 
-\code{dry.f} can be compiled and executed from an Mac Os terminal with:
+\code{dry.f} can be compiled and executed from an Mac s terminal with:
 
 \hspace*{8mm} \code{gFortran -o ./sw  -framework accelerate ./dry.for} \\
 \hspace*{8mm} \code{.sw} \\
@@ -375,9 +333,9 @@ This section outlines the structure of the Fortran code, how to compile and exec
 
 \begin{itemize}
 	\item \code{\code{dry.inc}}: specifies common variables used by \code{dry.f}  (a number of variables are ``common" variables, and not explicitly returned by the Fortran subroutines). 
-	\item \code{input}:  files to initialize \code{dry.f} are located in this folder.
-	\item \code{output}: \code{dry.f} saves the outputs to this folder.	
-	\item \code{params.json}: user-supplied parameter dictionary
+	\item \code{input}:  contains files to initialize \code{dry.f}.
+	\item \code{output}: contains output files created by \code{dry.f}.
+	\item \code{params.json}: user-supplied parameter dictionary.
 	\item \code{.sw}: the compiled Fortran executable.
 	\item \code{.ipynb} files: Jupyter notebooks to visualize the simulation outputs.
 \end{itemize}
@@ -407,11 +365,11 @@ Figure \ref{summary} summarizes the organization of \code{dry.f}, which can be d
 \label{SVEinit}
 	
 The \code{init} subroutine initializes the SVE component of the model,  which involves reading a number of scalar parameters from  \code{params.dat} and setting up the simulation grid.
- The infiltration parameters are initialized by the subroutine \code{initVG}.  The following briefly describes the input files, and further details are included in Appendix B (including an illustrative example of a  2$\times$2 grid).
+ The infiltration parameters are initialized by the subroutine \code{initVG}.  The following briefly describes the input files, and further details are included in Appendix B (including an  example of a  2$\times$2 grid).
   
 \subsubsection*{Input files}
 
-The following is a brief list of required input files (see Appendix B for further details and examples).
+The required input files are:
 
 \begin{itemize}
 
@@ -428,6 +386,8 @@ The following is a brief list of required input files (see Appendix B for furthe
 	\item \code{vanG.dat}: Van Genuchten parameters and initial $H$ as a function of depth for vegetated and bare soil cells. 
 
 \end{itemize}
+
+See Appendix B for further details and examples.
 
 
 
@@ -461,15 +421,15 @@ The following is a brief list of required input files (see Appendix B for furthe
 \subsection{Model output}
 
  \code{dry.f} saves the following  files in the \code{output} subfolder.
-Most variables are saved at intervals of  $dt\_p$, to limit the size of the output files, with the exception of the hydrograph, which is saved at 1 s resolution.   
+Most variables are saved at intervals of  \code{dt\_p}, to limit the size of the output files, with the exception of the hydrograph, which is saved at 1 second resolution.   
 \begin{itemize}
 	\item \code{dvol.out}:  output file to check mass balance. Read by function \code{get\_dvol} in \code{output\_dry.py}.
 	\item \code{fluxes1234.out}: lateral boundary fluxes, grouped by boundary  position (i.e. boundary positions 1-4).  
-	\item \code{h.out}: primitive variables $h$,$U$, $V$, infiltration $I$ and interfacial fluxes (spatially-distributed fields, saved at every grid-cell)
+	\item \code{h.out}: primitive variables $h$, $U$, and $V$, infiltration $I$ and interfacial fluxes (saved at every grid-cell)
 	\item \code{summary.out}: summarizes ponding time, runtime, final time, and if applicable, the reason for an early exit (i.e. no more water, AMAX too big) 
 	\item \code{hydro.out}: hydrograph at 1 second time resolution (m$^3$/s).  
 	\item \code{ptsTheta.out}: soil moisture profiles at two points, one vegetated and one bare. 
-	\item \code{time.out}: file containing time, and max CFL number at each timestep.
+	\item \code{time.out}: file containing the max CFL number at each timestep.
 \end{itemize}
 
 \subsection{Principal model components (\code{dry.f} subroutines)}
@@ -478,22 +438,22 @@ This section provides a high level summary of the main model components (i.e. \c
 
 \subsubsection*{The predictor step}
 
-The \code{predict} subroutine is called to compute \code{hp}, \code{up},  \code{vp},corresponding to $h^{n+1/2}$,$u^{n+1/2}$,$v^{n+1/2}$, at each cell.   It modifies the common variables  \code{hp}, \code{up},  \code{vp}, \code{dh}, \code{du}, \code{dv}, \code{qs}.
+The \code{predict} subroutine is called at each cell to compute \code{hp}, \code{up},  \code{vp},corresponding to $h^{n+1/2}$,$u^{n+1/2}$,$v^{n+1/2}$.   It modifies the common variables  \code{hp}, \code{up},  \code{vp}, \code{dh}, \code{du}, \code{dv}, \code{qs}.
 
 \subsubsection*{Corrector step}
 
-The corrector step computes the fluxes between the cell interfaces by calling the \code{fluxes} subroutine for each cell and for each interface. 
+To compute the fluxes between the cell interfaces, the corrector step  calls the \code{fluxes} subroutine for each cell and for each interface. 
 
-The interfacial cell fluxes at a given time-step are stored in the common variable \code{f(0:nx,0:ny,1:3,1:2)}, where the first two indices of \code{f} contain the $j,k$ coordinates, the third index correspond to the components of  $\mathbf{F_\perp}$ (see Equation), and the final index denotes the cell face (1 for vertical cell faces and 2 for horizontal).   
-\code{f(j,k,1:3,1)} represents the flux from cell $(j-1, k)$ to $(j, k)$, and
+The interfacial cell fluxes at a given time-step are stored in the common variable \code{f(0:nx,0:ny,1:3,1:2)}, where the first two indices of \code{f} contain the $j,k$ coordinates, the third index correspond to the components of  $\mathbf{F_\perp}$, and the final index denotes the cell face (1 for vertical cell faces and 2 for horizontal).   
+For example, \code{f(j,k,1:3,1)} represents the flux from cell $(j-1, k)$ to $(j, k)$, and
 \code{f(j,k,1:3,2)} represents the flux from cell $(j, k-1)$ to $(j, k)$ (see Figure \ref{fluxes_specific}).
-Calling \code{fluxes(j-1,j,k,k,1)} modifies \code{f(j,k,1:3,1)}  and calling \code{fluxes(j,j,k-1,k,2)} \code{f(j,k,1:3,2)}.
+Calling \code{fluxes(j-1,j,k,k,1)} modifies \code{f(j,k,1:3,1)}  and calling \code{fluxes(j,j,k-1,k,2)} modifies \code{f(j,k,1:3,2)}.
 
  \begin{figure}[h]
  \centering
 \includegraphics[width=15pc]{grid/fluxes_specific.png}
- \caption{Definitional sketch for the interfacial fluxes, indicating how the fluxes into and out of cell (j,k) are stored in the array \code{f(0:nx,0:ny,1:3,1:2)}}.
- \label{fluxes_specific.png}
+ \caption{Definitional sketch for the interfacial fluxes, indicating how the fluxes into and out of cell \code{(j,k)} are stored in the array \code{f(0:nx,0:ny,1:3,1:2)}}.
+ \label{fluxes_specific}
  \end{figure}
 
 \subsubsection*{Fluxes subroutine}
@@ -510,55 +470,33 @@ Similarly, \code{i1 = 2} indicates that the flux is between horizontal cell face
 	 \frac{1}{2} (\mathbf{F_{\perp L}} + \mathbf{F_{\perp R}} - \mathbf{\hat{R} |\hat{\Lambda}| \Delta \hat V  })
 \end{equation*}
 
-%% equations from BK are reproduced here in order to relate these equations to  the Fortran code.t
 
 \subsubsection*{The \code{source} subroutine}
 
-% Infiltration and surface resistance are represented in 
- The source term is computed with the subroutine \code{source}, which modifies the common variable \code{qs} (or $Q(j,k)$).
-  \code{source} is called by both the predictor and corrector steps; however, Richards equation is only solved during corrector step. 
+ The source term is computed with the subroutine \code{source}, which modifies the common variable \code{qs}.
+  \code{source} is called in both the predictor and corrector steps; however, Richards equation is only solved in corrector step. 
  The input arguments are the  cell indices \code{j,k}, the primitive variables, and an indicator variable \code{lstep} for the step type (\code{lstep = 0} for the predictor step and 1 for the corrector step.		
  
 In the predictor step, \code{source} is called for each cell before updating the predictor values (\code{hp,up,vp}).  \code{source} is similarly  called in the corrector step before updating the fluxes.
 
 \subsubsection*{Infiltration details (corrector-step)}
 
-In the corrector step, \code{source} calls the infiltration-specific subroutines (\code{timestep} and \code{potential} to update the infiltration rate $i$ and the surface boundary conditions at cell \code{j,k}. 
-%calls th subroutines (\code{potential} and \code{timestep}) to solve Richards equation. 
+In the corrector step, \code{source} calls the infiltration subroutines (\code{timestep} and \code{potential} to update the infiltration rate $i$ and the surface boundary conditions at cell \code{(j,k)}. 
+
 \code{timestep} solves Richards equation at cell \code{(j,k)} and returns the updated $H$, $\theta$ and $K$, which \code{source} uses to compute the infiltration rate $i$. \code{potential} is used to prescribe the boundary conditions. 
 
- The Richards equation solver is implemented separately for each grid cell, and the 3-dimensional $H$, $\theta$ and $K$  fields are saved as the common variables \code{r8H} (cm), \code{r8Theta}, and  \code{r8K} (cm/s), respectively, with dimensions (\code{nrow} $\times$ \code{ncol} $\times$ \code{nz}).\\ 
+Richards equation  is solved separately for each grid cell, and the 3-dimensional $H$, $\theta$ and $K$  fields are saved as the common variables \code{r8H} (cm), \code{r8Theta}, and  \code{r8K} (cm/s), respectively, with dimensions (\code{nrow} $\times$ \code{ncol} $\times$ \code{nz}).\\ 
 
-The \code{potential} subroutine computes the infiltration that would occur with $H=0$ at the surface ($PI$/\code{PI}), and is required for Richards case 2 in Figure \ref{richards}.
+The \code{potential} subroutine computes the infiltration that would occur with $H=0$ at the surface (\code{PI}), and is required for Richards case (2) in Figure \ref{richards}. Ponding does not occur until the \code{potential} subroutine determines that the rainfall exceeds to potential infiltration rate ($p>PI$). 	 When there is rain but no ponding (\code{depth=0} and \code{rain > 0}), the  \code{potential} subroutine is called to estimate a potential infiltration rate $PI$, defined as the infiltration that would occur with $H=0$ at the surface (in cm/s).   If the potential infiltration rate is less than the rainfall rate (\code{(PI .lt. rain*100)}), water accumulates on the surface.  In this case, the Richards boundary condition is switched to fixed $H$.	
 
 \noindent From Darcy's law, the infiltration rate $i$ (cm/s) is computed as:
 $$ i =  K \bigg(\frac{\partial H}{\partial z} + 1\bigg ) $$
 which corresponds to \code{r8kt*((hdum(nz)-hdum(nz-1))/dz+1)} in \code{source}.
 
-\noindent  As an intermediate step, the depth is updated with: \\
-\begin{center}
-\code{znew=  zold + prate*100*dt - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)*dt } 	
-\end{center}
-where \code{prate}  rainfall has been converted to cm/s.
- \code{winflt} = $p-i$  is then computed as:
-\begin{center}
- \code{winflt = (znew - zold)/dt/100.} 	
-\end{center}
 
-%Note that \code{znew} is computed as a separate step for code readability, and things could be simplified to: \code{winflt = prate*100 - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)} .
-	
- 
-
-Richards equation is solved by the \code{timestep} subroutine, which is called from \code{source}.
- Richards equation is solved every \code{iscale} timesteps. 
-  For all other SVE time steps, the infiltration rate is estimated as:
-		  \begin{center}
-			\code{r8kt*((hdum(nz) - hdum(nz-1))/dz + 1.d0)*dt} 		  	
-		  \end{center}
-		if the depth is greater than zero.    Ponding does not occur until the \code{potential} subroutine determines that the rainfall exceeds to potential infiltration rate ($p>PI$). 		
 		
-When there is rain but no ponding (\code{depth=0} and \code{prate > 0}), the  \code{potential} subroutine is called to estimate a potential infiltration rate $PI$, defined as the infiltration that would occur with $H=0$ at the surface (in cm/s). \\  
-If the potential infiltration rate is less than the rainfall rate (\code{(PI .lt. prate*100)}), ponding begins.  In this case, the Richards boundary condition is switched to fixed $H$.
+
+
 
 
 	
@@ -579,10 +517,10 @@ First,  roughness parameters are specified separately for vegetated and bare cel
   The default soil parameters are Manning's equation with \code{alpha = 0.1}, and \code{alpha\_B = 0.03}.
 
 
-The model is set up to specify rain-driven overland flow on a planar hillslope, for which the lateral boundaries are closed with the exception of the open boundary at the bottom of the hillslope.  Limited support is provided for a fixed flux (subcritical) upslope boundary condition,  where the inflow boundary dimensions are equal to the entire upslope area.  Code for other boundary conditions is not provided, but can be implemented with modification to \code{input\_coords.py} (or directly to the Fortran input parameter functions).
-For a fixed flux upslope boundary, \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. The code would need to be modified with the addition of a new variable (e.g. time of inflow end) to change this, which would be straightforward. 
+The model is set up to specify rain-driven overland flow on a planar hillslope, for which the lateral boundaries are closed with the exception of the open boundary at the bottom of the hillslope.  An additional example  is provided for a fixed flux (subcritical) upslope boundary condition,  where the inflow boundary dimensions are equal to the entire upslope area.  Code for other boundary conditions is not provided, but can be implemented with modification to \code{input\_coords.py} (or directly to the Fortran input files).
+For a fixed-flux upslope boundary, the `rain duration` \code{tr} also specifies that the time as which the inflow stops (i.e. the boundary changes from fixed flux to a wall boundary).  In the case of rain AND upslope inflow, for example, to simulate rain on a longer hillslope domain, the rain and inflow will end at the same time. 
 
-The bare soil areas are represented by a two-layer model, where the upper, less-permeable  layer represents a surface crust.  With the exception of $K_{s}$, the van Genuchten parameters are the same between vegetated and bare cells. In the bare soil areas, $K_{s}$ of the lower soil layer is  equal to that in the vegetated patches (See schematic).
+The bare soil areas are represented by a two-layer model, where the upper, less-permeable  layer represents a surface crust.  With the exception of $K_{s}$, the van Genuchten parameters are the same between vegetated and bare cells. In the bare soil areas, $K_{s}$ of the lower soil layer is  equal to that in the vegetated patches (see Figure \ref{domain_schematic}).
 The van Genuchten parameters and vertical structure of the soil can be modified in \code{input\_phi.py}.
 
 
@@ -592,7 +530,7 @@ The van Genuchten parameters and vertical structure of the soil can be modified 
 \begin{itemize}
 \item \code{write\_nodes(path, ncol, nrow)  }: writes the cell node indices to \code{input/nodes.dat}.  
     This function assumes that the grid is rectangular, and would need to be modified for a non-rectangular grid. 
-       It saves \code{nop}, which contains the indices of the nodes surrounding each cell face.
+       It saves \code{nop.dat}, which contains the indices of the nodes surrounding each cell face.
 \item \code{build\_coords(params)}: constructs the \code{x,y,z} coordinates fields. 
 \end{itemize}
 
@@ -608,28 +546,25 @@ Example Python scripts are provided to generate the Fortran input files, execute
  \label{schematic}
  \end{figure}
  
- 
-\code{output\_dry.py} contains three main sub-functions, listed below:
+ \code{call\_dry.py}  is a control script which writes the Fortan input files, compiles and executes the Fortran code dry.for, and reads the output files. 
+It contains three main sub-functions, listed below:
  \begin{itemize}
- 	\item  \code{call\_dry.py} 
-	\begin{itemize}
 		\item \code{sim\_input.py} 
 		\item \code{runmodel}
 		\item \code{sim\_read.py}
-	\end{itemize}
  \end{itemize}
  
- \code{call\_dry.py}  is a control script which writes the Fortan input files, compiles and executes the Fortran code dry.for, and reads the output files.
+
 
  
 \subsection{\code{sim\_input.py}: writes the Fortran input files}
 
 
-\code{sim\_input.py} takes the input arguement \code{sim\_path}, the path to the simulation directory containing a parameter file \code{params.json}, and sets up the file structure required by \code{dry.f}:
+\code{sim\_input.py} takes the input arguement \code{sim\_path}, the path to the simulation directory containing a parameter file \code{params.json}, and sets up the required file structure. This involves:
 \begin{itemize}
-	\item copies \code{dry.f} and \code{dry.inc} to \code{sim\_path}
-	\item makes \code{sim\_path/input} and \code{sim\_path/output} subdirectories
-	\item  reads and interprets the parameter file \code{params.json}    
+	\item copying \code{dry.f} and \code{dry.inc} to \code{sim\_path};
+	\item making \code{sim\_path/input} and \code{sim\_path/output} subdirectories;
+	\item  reading and interpreting the parameter file \code{params.json}    
 \end{itemize}   
 
 
@@ -647,7 +582,7 @@ See appendix B for examples of the Fortran input files.
 SVE parameters include:
 \begin{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%  Grid setup. %%%%%%%%%%%%%%%%%%%%%%%%%
-	\item \code{dx}: grid discretization (default = 1.)  
+	\item \code{dx}: grid discretization (default = 1 m)  
 	\item \code{nrow}:  number of grid cells in the along-slope direction.
 		\subitem hillslope length \code{Ly} = \code{nrow * dx} 
 	\item \code{ncol}:  number of grid cells in the across-slope direction (default = 10).
@@ -693,9 +628,8 @@ The function \code{runmodel}, located in \code{call\_dry.py}, uses the Python os
     
 \subsection{\code{read\_sim}: reads the Fortran output files }
 
-The output files are read by \code{sim\_read.py}, which reads the output files and saves the results as a dictionary  \code{sim.pklz}.  The variables to be saved are provided in the list \code{fortran\_outvars}.
+ \code{sim\_read.py} reads the output files and saves the results as a dictionary  \code{sim.pklz}.  The variables to be saved are lisrted\code{fortran\_outvars}.   \code{sim\_read.py}  executes the functions: 
 
-which calls the following functions to read the output files:
 \begin{itemize}
 	\item \code{read\_time}: reads \code{time.out}
 	\item \code{read\_hydro}: reads \code{hydro.out} and returns \code{t\_h} and \code{hydro}. The hydrograph is normalized by the hillslope dimensions to convert m$^3$/s to cm/s.
@@ -704,22 +638,12 @@ which calls the following functions to read the output files:
 \end{itemize}
 
  
-%\subsubsection*{Variables saved by \code{sim\_read.py}}
-%\begin{itemize}
-%	\item \code{h}: m
-%	\item \code{u, v}: m/s
-%	\item \code{inflVmap}: cm m$^2$ (converted from m$^2$ )
-%	\item \code{xflux0, yflux0, xflux1, yflux1}: cm m$^2$ (converted from m$^2$ )	 
-%	\item  \code{zinflc}: infiltration depth in cm 
-%	\item  \code{hydro}:
-%	\item \code{t\_h}:    
-%\end{itemize}
 
 	
 \section{Select examples}	
 \label{select_examples}
 
-The following example simulations are included to demonstrate the model functionality, which can be used as templates for future work:
+The following example simulations are included to demonstrate the model functionality, which can be used as templates:
 \begin{itemize}
 	\item \code{example\_2by2}: illustrate the grid set-up for a 2$\times$2 domain (see appendix B).
 	\item  \code{example\_image}: rain driven overland flow on a planar hillslope with the vegetation field read from an image file.
@@ -734,35 +658,6 @@ Additionally, several template notebooks are included to process the SVE-R simul
 \begin{itemize}
 	\item \code{example\_mass\_balance.ipynb}: Check mass balance in the SVE-R model. 
 \end{itemize}
-
-%\subsubsection*{Template notebooks to view / modify how the SVE-R inputs are constructed}
-%\begin{itemize}
-%	\item \code{input\_coords.ipynb}:  Illustrate how the topography is created. Includes limited 3D plotting functionality. Case: planar...
-%	\item \code{input\_veg.ipynb}:  Illustrate how the vegetation is created. Case: randv, stripes (random widths and spacing), read image.
-%	\item \code{image\_read.ipynb}: Code that reads image file and adjusts to the specified hillslope dimensions.  After \code{wrap\_image\_veg} function in \code{input\_veg.py}.
-%\end{itemize}
-
-
-%
-%\subsection{Richards stand-alone code}
-%
-%\begin{enumerate}
-%	\item Richards solver implementation in Python (to assess sensitivity to Richards discretization) 
-%	\subitem  A stand alone Python implementation is available in the jupyter notebook file \code{Richards.ipynb} and Python module \code{richards.py}. 
-% 
-%	\item GW code (to compare SVE-R and GW solutions.  note, also includes code to estimate soprtivity from Van Genuchten parameters)
-%\end{enumerate}
-
-%\subsubsection*{Richards alone ipynb notebooks}
-%\begin{itemize}
-%	\item \code{Richards\_basic.ipynb}: a simple ipynb implementation of the Richards equation solver, following \textit{Celia et al.} (1990).  Translated from Alejandro Flores' Matlab version:
-%	\subitem	\code{https://leaf.boisestate.edu/blog/2010/11/07/richards-solver-code/}
-%	\item \code{Richards.ipynb}: uses  \code{Richards.py} from \code{richards1D.py}.  Need to add crust functionality and saturation logic to this module!f
-%	\item 
-%\end{itemize}
-
-%The stand-alone 1D Richards equation solver is structured as a class \code{Richards}, which takes as input a parameter dictionary \code{params}. 
-
 
 \section{Emulator feature code}
 \label{emulator}
@@ -1094,15 +989,15 @@ which corresponds to \code{r8kt*((hdum(nz)-hdum(nz-1))/dz+1)} in \code{source}.
 
 \noindent  As an intermediate step, the depth is updated with: \\
 \begin{center}
-\code{znew=  zold + prate*100*dt - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)*dt } 	
+\code{znew=  zold + rain*100*dt - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)*dt } 	
 \end{center}
-where \code{prate}  rainfall has been converted to cm/s.
+where \code{rain}  rainfall has been converted to cm/s.
  \code{winflt} = $p-i$  is then computed as:
 \begin{center}
  \code{winflt = (znew - zold)/dt/100.} 	
 \end{center}
 
-%Note that \code{znew} is computed as a separate step for code readability, and things could be simplified to: \code{winflt = prate*100 - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)} .
+%Note that \code{znew} is computed as a separate step for code readability, and things could be simplified to: \code{winflt = rain*100 - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)} .
 	
  
 
@@ -1111,18 +1006,13 @@ where \code{prate}  rainfall has been converted to cm/s.
 Richards equation is solved by the \code{timestep} subroutine, which is called from \code{source}.
 	
 \subsubsection*{timestep inputs and outputs }
-The inputs are \code{hnp1m, thetan}, which are the initial conditions to the Richards eqn solver (\code{hdum,thetadum} in the source subroutine, which calls \code{timestep}).  
-The outputs are  \code{hnp1mp1,r8thetanp1m,r8knp1mp1}, which are  $H$, $\theta$ and $K$ at the following timestep (after dt\_r  time elapsed).
+The inputs are \code{hnp1m} and \code{thetan}, which are the initial conditions to the Richards equation solver (\code{hdum,thetadum} in the source subroutine).  
+The outputs are  \code{hnp1mp1,r8thetanp1m,r8knp1mp1}, which are  $H$, $\theta$ and $K$ at the following timestep (after \code{dt\_r}  time elapsed).
 
 
 %$ i =  K (\frac{\partial H}{\partial z} + 1) $, which corresponds in the Fortran code to \code{r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)}. 
 
-When the soil is flagged as saturated,  the surface flux is set to $K$ at the surface, which should be very close to saturated (\code{flux  = - r8knp1m(nz)}).  This is achieved by adjusting the value of $H$ at node (nz-1):
-\begin{center}
-\code{hnp1mp1(nz-1) = hnp1mp1(nz) + dz + flux*dz/r8knp1m(nz-1)}	
-\end{center}
-
-Note: this approach should be treated with caution.  Is was designed for the use case of a fixed intensity rain storm, in which a uniform wetting front would arise.  It is not meant for variable rainfall cases.
+When the soil is flagged as too homogenous for matrix inversion (i.e. `saturated'),  the surface flux is set to $K$ at the surface, which will be approximately saturated if $p > K_{sat}$ (\code{flux  = - r8knp1m(nz)}).  
 
 \subsubsection*{Stop tolerance }
 \code{stop\_tol0} is the stop tolerance specified in the input \code{params.dat}, with default value \code{stop\_tol0 = .01}.  
@@ -1141,7 +1031,7 @@ Potential infiltration is computed when there is rain but no ponding, and return
 %
 %\begin{itemize}
 %	\item \code{isetflux} (common) specifies the boundary condition for the Richards equation solver.  \\[.2cm]
-%	 \code{isetflux} = 1 if the surface flux is specified: \code{flux = 0} in case 3 (no rain and no ponding), and \code{flux = prate} in case 2 (rain and no ponding).\\[.2cm]
+%	 \code{isetflux} = 1 if the surface flux is specified: \code{flux = 0} in case 3 (no rain and no ponding), and \code{flux = rain} in case 2 (rain and no ponding).\\[.2cm]
 %	 \code{isetflux} = 0 if the surface H is specified (Dirichlet). If there is ponding (case 4), the surface boundary condition is $H$=$h$. 
 %	\item \code{flux} is the surface flux (cm/s).  \code{flux} is a common variable defined in \code{source}, and used by \code{timestep}  if \code{isetflux=1}. 
 %
@@ -1199,7 +1089,7 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
 	\item \code{dt}: SVE timestep (\code{dt} is labeled \code{dt\_sw} in the Python code). 
 	\item \code{tmax}: maximum time until the simulation ends.
 	\item \code{tr}: rain duration in seconds (\code{tr} is labeled \code{t\_rain} in the Python code). 
-	\item \code{prate}: rain intensity in m/s.
+	\item \code{rain}: rain intensity in m/s.
 	\item \code{nt}:  number of time steps  (\code{tmax/dt})
 	\item \code{epsh}: depth threshold to solve the SVE momentum equations.
 	\item \code{beta}: value of beta in limitr subroutine.
@@ -1461,19 +1351,19 @@ if lstep = 1 then
    if mod(it, iscale) != 0 then 
      if there is ponding, set the the surface flux / infiltration rate using K from the previous timestep
 ! Case 2: rain and no ponding
-   else (if prate > 0 and zold = 0) then
+   else (if rain > 0 and zold = 0) then
      call potential(hdum, thetadum, PI)  ! determine the potential infiltration rate PI.  Note:  potential is a subroutine that takes hdum and thetadum as inputs and returns PI as the output.
-!    Handle two cases: PI > prate (no po	nding) and PI < prate (ponding starts)
-     if  prate > PI then
+!    Handle two cases: PI > rain (no po	nding) and PI < rain (ponding starts)
+     if  rain > PI then
          record the time of ponding, tp
 	     isetflux = 0   ! set the Richards boundary type to fixed H (Dirichlet), with htop=0 at the surface.
 	     call Richards equation with the updated boundary conditions.	   
      else 	! no ponding
      	 isetflux = 1
-     	 flux = - prate*100. ! set the infiltration 	rate to the rainfall rate       
+     	 flux = - rain*100. ! set the infiltration 	rate to the rainfall rate       
 	     winflt = (znew - zold)/dt/100.d0 
 ! Case 3: no ponding and no rain
-    else if (zold = 0 and prate = 0) then
+    else if (zold = 0 and rain = 0) then
 	    isetflux = 1 ! set the Richards surface boundary condition to fixed flux
 		flux = 0     ! set flux to zero
 		call Richards equation solver to update the soil moisture profile

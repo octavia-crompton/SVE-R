@@ -1243,7 +1243,7 @@ C For fixed flux BCs, must initialize depth.
               dx = -dxi(j,k,2)*area(j,k)
               dy = dxi(j,k,1)*area(j,k)  
               dss = dsqrt(dx*dx + dy*dy)
-							
+	
               if(h(j,k) .lt. epsh) then
                  write(*,*) ' *** bed adjacent to the boundary ',
      &                 'is dry ***'
@@ -1251,7 +1251,7 @@ C For fixed flux BCs, must initialize depth.
                    qflux = dabs(qflux)
                    hnorm=(qflux*xnc(j,k)/dsqrt(dabs(dzz(j,k,2)/dss)))
      &           	          **(3.D0/5.D0)     
-		 							
+
                    write(*,*) ' *** normal depth = ', hnorm*100.,
      &                              'cm is specified'
                    h(jj,kk) = hnorm 
