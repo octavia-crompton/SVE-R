@@ -936,10 +936,10 @@ This subroutine uses the monotone upstream scheme for conservation laws (MUSCL) 
 
 \subsection{The source subroutine}
 
-% Infiltration and surface resistance are represented in 
- The source term is computed with the subroutine \code{source}, which modifies the common variable \code{qs} (or $Q(j,k)$).
-  \code{source} is called by both the predictor and corrector steps; however, Richards equation is only solved during corrector step. 
- The input arguments are the  cell indices \code{j,k}, the primitive variables, and \code{lstep} (an indicator variable for the step type: \code{lstep = 0} for the predictor step and \code{lstep = 1}  for the corrector step).	
+ The source term is computed with the subroutine \code{source}, which is called by both the predictor and corrector steps.
+Richards equation is solved only in the corrector step.     The  source subroutine handles the infiltration boundary conditions (i.e. fixed $H$ or fixed flux), and calls the subroutines that solve Richards equation (\code{timestep} and \code{potential}), which update the infiltration variables.  
+ 
+ The input arguments are the cell indices \code{j,k}, the primitive variables, and \code{lstep} (an indicator variable for the step type: \code{lstep = 0} for the predictor step and \code{lstep = 1}  for the corrector step).	\code{source} modifies the common variable \code{qs} (or $Q(j,k)$) and the infiltration variables \code{r8THETA, r8H, r8K}. 
  
 In the predictor step, \code{source} is called for each cell before updating the predictor values (\code{hp,up,vp}):
 \begin{center}
@@ -949,7 +949,7 @@ In the predictor step, \code{source} is called for each cell before updating the
  
 \code{source} is similarly  called in the corrector step before updating the fluxes: 
 \begin{center}
-\code{call source(j, k, hp(j,k), up(j,k), v[(j,k), 0)}
+\code{call source(j, k, hp(j,k), up(j,k), vp(j,k), 0)}
 \end{center}
 
 Inside \code{source}, the primitive variables are labeled \code{depth,udum,vdum}. 
@@ -966,15 +966,13 @@ The source term in Fortran code is given as:
 where $S_{f,x}$ = \code{fricSx} and  $S_{f,x}$ = \code{fricSy}, and $p-i$ = \code{winflt}.
 
 
+
 \subsubsection*{Infiltration details (corrector-step)}
 
-In the corrector step, \code{source} calls the infiltration-specific subroutines (\code{timestep} and \code{potential} to update the infiltration rate $i$ and the surface boundary conditions at cell \code{j,k}. 
-%calls th subroutines (\code{potential} and \code{timestep}) to solve Richards equation. 
+In the corrector step, \code{source} calls the infiltration subroutines (\code{timestep} and \code{potential}) to update the infiltration rate $i$ and the surface boundary conditions at cell \code{j,k}. 
 \code{timestep} solves Richards equation at cell \code{(j,k)} and returns the updated $H$, $\theta$ and $K$, which \code{source} uses to compute the infiltration rate $i$. \code{potential} is used to prescribe the boundary conditions. 
 
- The Richards equation solver is implemented separately for each grid cell, and the 3-dimensional $H$, $\theta$ and $K$  fields are saved as the common variables \code{r8H} (cm), \code{r8Theta}, and  \code{r8K} (cm/s), respectively, with dimensions (\code{nrow} $\times$ \code{ncol} $\times$ \code{nz}).\\ 
-
-%%%% ADD POTENTIAL INFILTRATION
+ The Richards equation solver is implemented separately for each grid cell, and the 3-dimensional $H$, $\theta$ and $K$  fields are saved as the common variables \code{r8H} (cm), \code{r8Theta}, and  \code{r8K} (cm/s), respectively, each dimensions (\code{nrow} $\times$ \code{ncol} $\times$ \code{nz}).\\ 
 
 \noindent From Darcy's law, the infiltration rate $i$ (cm/s) is computed as:
 $$ i =  K \bigg(\frac{\partial H}{\partial z} + 1\bigg ) $$
@@ -982,9 +980,10 @@ which corresponds to \code{r8kt*((hdum(nz)-hdum(nz-1))/dz+1)} in \code{source}.
 
 \noindent  As an intermediate step, the depth is updated with: \\
 \begin{center}
-\code{znew=  zold + rain*100*dt - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)*dt } 	
+\code{znew =  zold + rain*100*dt - r8kt*( (hdum(nz) - hdum(nz-1))/dz + 1)*dt } 	
 \end{center}
-where \code{rain}  rainfall has been converted to cm/s.
+where \code{rain} is  the rainfall rate converted to cm/s.
+
  \code{winflt} = $p-i$  is then computed as:
 \begin{center}
  \code{winflt = (znew - zold)/dt/100.} 	
@@ -1019,7 +1018,6 @@ The subroutine \code{potential} is used to compute the potential infiltration ra
 Potential infiltration is computed when there is rain but no ponding, and returns the potential infiltration rate, defined as the infiltration rate that would occur with $H=0$ at the surface.  
 
 
-
 %\subsection{Source subroutine variables}
 %
 %\begin{itemize}
@@ -1047,7 +1045,6 @@ Potential infiltration is computed when there is rain but no ponding, and return
 %
 
 \section{Input and output files, illustrated with a 2$\times$2 grid}
-
 
 
 %\code{nop(1,1,:) = [1,4,5,2]} means that cell (1,1) is bounded by nodes \code{n1=1,n2=4,n3=5,n4=2}, starting from the lower left node \code{n1} moving counterclockwise.
@@ -1205,7 +1202,7 @@ These variables are written for every grid cell, every \code{nprt} timesteps (i.
  \begin{figure}[h]
  \centering
 \includegraphics[width=35pc]{grid/h_out.png}
- \caption{Screenshot of a sample \	code{h.out} file.}
+ \caption{Screenshot of a sample \code{h.out} file.}
  \label{h.out_example}
  \end{figure}
   
@@ -1219,72 +1216,55 @@ Contains output from Fortran mass balance tracking.
 Columns are \code{dvol, flux, infl} containing the  change in surface volume, horizontal fluxes out of the domain, infiltration and rain volumes, respectively, in units m$^3$.
 
 
-%\subsubsection*{hydro.out}
-
-
-
-
 \section{\code{dry.f} pseudocode}
 
 \subsection{Model overview/summary}
 
+ Pseudocode for the overall structure of the \code{dry.for}.
+
 \begin{lstlisting}
  
-call init ! grid  subroutine called from the input subroutine
+call init
+	call grid ! grid setup subroutine
 call myoutput  !  write initial conditions to file
-
 
 do it = 0,nt-1   ! loop over time steps (it = time iteration number)
 	t = t+dt   ! increment time (t = current time)
 
-	! Predictor step
-	loop over grid cells: 
-		call bconds(j, k, h, u, v)    ! update h,u,v values in ghost cells
-		call predict(j, k)            ! get predictor variables hp, up, vp
+! Predictor step
+loop over grid cells: 
+	call bconds(j, k, h, u, v)    ! update h,u,v values in ghost cells
+	call predict(j, k)      ! compute predictor variables:  dh, du, dv, qs,  up, hp, vp (common)               
 
-    ! Corrector step
-	! Corrector part 1: compute the fluxes between cell faces
-	loop over grid cells: 			  
-    call bconds(j,k,hp,up,vp) ! update hp,up,vp in the ghost cells
-    ! compute interfacial fluxes. 
+! Corrector step
+! Part 1: compute the fluxes between cell faces
+loop over grid cells: 			  
+    call bconds(j,k,hp,up,vp) ! update ghost cell hp,up,vp
+    ! compute interfacial fluxes: 
     call fluxes(j-1,j,k,k,1)      ! vertical faces. 
     call fluxes(j,j,k-1,k,2)      ! horizontal faces.
+    !  fluxes() modifies common variable f(0:nx,0:ny,3,2)    
 	loop over boundaries:
 		compute boundary fluxes
 	
-	! Corrector part 2: 
-	loop over cells:
-		call source ! update the source term qs
-		compute q from qs and f	! q = (h,uh,vh)
-		! update h,u,v from q. check 
-	    if q > 0:				! check for negative depth.	
-			h = q(1) 		    ! if positive depth, update h
-	    else:
-			q = 0 				! if negative depth, reset h and q(1) to zero
-			h = 0					  
-	
-	    if h < epsh: 		!  neglect momentum in nearly dry cells
-			u, v = 0.		!  set u and v to 0 in nearly dry cell	  
-			q(2:3) = 0 		!  set momentum fluxes to 0
-	    
-	    elif h >= epsh:		!  store u and v values
-	    	u, v = q(2)/h, q(3)/h
-		    
-    ! Exit when the ponded water is less than min_vol    
+! Part 2: 
+loop over grid cells:
+	call source ! update the source term qs
+	compute q = (h,uh,vh) ! function of f and qs
+	 update h,u,v using q ! check for negative depths,
+	 ! 				 and neglect momentum where d < epsh
+
+     
+    ! Exit if the surface water volume is less than a threshold value  
     if volume < min_vol
     	call gracefulExit
-    	
-    ! Exit when the CFL number is too big
+    ! Exit if the CFL number is too big
     if(CFL > 10) then
         call gracefulExit
-        
-	! Exit if time runs out
-    if(t > tmax) then
+     ! Exit if time runs out
+     if(t > tmax) then
          call gracefulExit
-            
-\end{verbatim}
-
-
+    \end{lstlisting}
 
 
 \subsection{Grid  pseudocode}
