@@ -101,7 +101,6 @@ def color_topo(zc, dx = 1.0, ax = ''):
     cbh.set_label('elevation (m)', fontsize = 16)
     
     return topo
-    
 
 def plot_c(r, dx = 1, ax  = ''):
 
@@ -117,7 +116,8 @@ def plot_c(r, dx = 1, ax  = ''):
 
         contours[n] = contour
         if len(contour) >2:
-            ax.plot(contour[:, 1]*dx + dx, contour[:, 0]*dx + dx, linewidth=0.7, c= 'k')
+            ax.plot(contour[:, 1]*dx + dx, contour[:, 0]*dx + dx, 
+                linewidth=0.7, c= 'k')
             
 def plot_c_inv(r, dx = 1, ax  = ''):
 
@@ -133,7 +133,8 @@ def plot_c_inv(r, dx = 1, ax  = ''):
 
         contours[n] = contour
         if len(contour) >2:
-            ax.plot(contour[:, 1]*dx + dx, contour[:, 0]*dx + dx/1.5, linewidth=0.7, c= 'k')
+            ax.plot(contour[:, 1]*dx + dx, contour[:, 0]*dx + dx/1.5, 
+                linewidth=0.7, c= 'k')
 
 def colormap(df, array,  ax = '',
              colorbar = True, veg_scale = False,
