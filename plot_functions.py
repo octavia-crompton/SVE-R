@@ -107,7 +107,7 @@ def plot_c(r, dx = 1, ax  = ''):
 
     import cv2
     thresh = r.astype(np.uint8)
-    image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
         cv2.CHAIN_APPROX_NONE)
     if ax == '':     
         fig, ax = plt.subplots()
