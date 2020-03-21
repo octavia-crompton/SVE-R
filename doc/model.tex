@@ -388,7 +388,7 @@ See Appendix B for further details and examples.
 	\item \code{nn}: space allocated to the grid (\code{nn>np}).
 	\item  \code{np}:  the number of cell nodes. 
 	\item \code{x(nn), y(nn), zz(nn)}: $x,y,z$ coordinates of the cell nodes.  \\[0.1cm]
-		\code{x,y,zz} are read as 1D arrays, and interpolated to a 2D grid with the help of the nodes file \code{nodes.dat}.
+		\code{x,y,zz} are read as 1D arrays, and interpolated to a 2D grid using \code{nodes.dat}.
 		\item  \code{xc, yc, zc}: coordinates at the cell centers, with dimensions \code{(ncol, nrow)}
 
 	\item \code{nop(nx,ny,4)}: node numbers defining each grid cell (see Figure \ref{nodes}).  
@@ -423,7 +423,7 @@ Most variables are saved at intervals of  \code{dt\_p}, to limit the size of the
 	\item \code{time.out}: file containing the max CFL number at each timestep.
 \end{itemize}
 
-\subsection{Principal model components (\code{dry.f} subroutines)}
+\subsection{Model components (\code{dry.f} subroutines)}
 
 This section provides a high level summary of the main model components (i.e. \code{dry.f} subroutines) and how they connect.  Further information and details can be found in Appendix A.
 
@@ -678,6 +678,11 @@ Within \code{RF\_patterns.py}, the  function \code{get\_feature\_matrix} takes a
 
 \section{Relating \code{dry.f} code to the SVE and Richards equation }
 
+\subsection{Grid setup}
+
+ The primitive equations are transformed to a curvilinear coordinate system in which $\xi$ and $\eta$ are in the directions of contiguous j and k indices, respectively.
+ $\xi_x$,  $\xi_y$,  $\eta_x$ and  $\eta_y$ are the grid transformation metrics from mapping $x$ and $y$ to $\xi$ and  $\eta$.
+
 
 The following is a partial list of grid correspondences:
 \begin{itemize}
@@ -696,8 +701,28 @@ The following is a partial list of grid correspondences:
 	\item  $\dfrac{dz}{dx}$= \code{sx}
 	\item  $\dfrac{dz}{dy}$= \code{sy}
 \end{itemize}
-% Vertical cell faces have index 1, horizontal faces have index 2
-% \code{ds(j,k,2)}: area of the lower horizontal boundary of cell \code{j,k} (\code{ipos = 1}), in m$^2$.
+
+Vertical cell faces have index 1, horizontal faces have index 2
+
+
+\subsubsection{Grid in cartesian coordinates}:
+
+
+\noindent On a cartesian grid, the generalized form simplifies to:
+\begin{eqnarray*}
+	\xi  = x , \quad \eta  = y
+\end{eqnarray*}
+  
+\begin{eqnarray*}
+	\frac{dx}{d\xi} = 1 \\
+	\frac{dy}{d\eta} = 1 \\
+	d\xi = \dfrac{1}{\textmd{area} }\bigg(\dfrac{dy}{d\eta}, -\dfrac{dx}{d\eta}\bigg) = (1,0) \\
+	d\eta = \dfrac{1}{\textmd{area}} \bigg(- \dfrac{dy}{d\xi}, -\dfrac{dx}{d\xi}\bigg) = (0,1)
+\end{eqnarray*}
+
+\code{sx} = $dz/dx$ and \code{sy} = $dz/dy$: 
+
+
 
 \subsection{The predictor step}
 
@@ -1076,15 +1101,15 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
   
 \begin{itemize}
 	\item \code{grav}: acceleration due to gravity.
-	\item \code{dt}: SVE timestep (\code{dt} is labeled \code{dt\_sw} in the Python code). 
+	\item \code{dt}: SVE timestep (\code{dt\_sw} in the Python code). 
 	\item \code{tmax}: maximum time until the simulation ends.
-	\item \code{tr}: rain duration in seconds (\code{tr} is labeled \code{t\_rain} in the Python code). 
+	\item \code{tr}: rain duration in seconds (\code{tr} is in minutes in the Python code). 
 	\item \code{rain}: rain intensity in m/s.
 	\item \code{nt}:  number of time steps  (\code{tmax/dt})
 	\item \code{epsh}: depth threshold to solve the SVE momentum equations.
 	\item \code{beta}: value of beta in limitr subroutine.
-	\item \code{nprt}: frequency f which the SVE-R output fields are saved: \code{nprt= dt\_p}.  Note: the hydrograph is saved every second.
-	\item \code{iscale}: ratio of SVE to Richards equation timestep durations.
+	\item \code{nprt}: the SVE-R output fields are saved every \code{nprt} timesteps (hydrograph is saved every second).
+	\item \code{iscale}: ratio of SVE to Richards equation timesteps.
 	\item \code{stop\_tol}: convergence criteria for Richards equation solver (default = 0.01).
 	\item \code{h0, u0, v0}: initial depth, \code{u}, and \code{v} (defaults = 0).
 	\item \code{r8mV,r8etaV, r8alphaV}: roughness parameters $m$, $\eta$ and $\alpha$ for vegetated cells. 
@@ -1095,13 +1120,6 @@ Sample \code{params.dat} files can be found in the \code{input} directories of t
 \end{itemize}
 
 
-
- 
-% Following this, 
-% the following rows record: 
-% the number of columns and rows, and, for each column, 
-% the beginning and final row  (i.e. \code{kbeg = 1} and \code{kend = nrow}.
-%  
 \subsection{boundary.dat}
 
 \code{boundary.dat} specifies the boundary cell locations, types and orientations.  
@@ -1141,14 +1159,14 @@ j     kbeg          kend
     2      1             2   
 number of fixed bc cells, ndir    
  2  
- j     k    fix h    fix u    fix v	
+j     k    fix h    fix u    fix v	
 1     2     0.0     0.0     -2e-05     
 2     2     0.0     0.0     -2e-05     
 \end{verbatim}
 
 \subsection{coords.dat}
 
-In the two rows specify the number of nodes (\code{npt}) and the number of cells (\code{ne}).  The remaining rows list the x,y,z coordinates at the nodes, in order of node number. Below is an example \code{coords.dat} file for the 2$\times$2 exampleg rid.
+In the two rows specify the number of nodes (\code{npt}) and the number of cells (\code{ne}).  The remaining rows list the x,y,z coordinates at the nodes, in order of node number. Below is an example \code{coords.dat} file for the 2$\times$2 example grid.
 
 
 \begin{verbatim}
@@ -1172,7 +1190,7 @@ x             y             z
 The first two rows specify the soil depth (\code{zmax}) and soil layer thickness (\code{dz}), and the second two rows specify the number of soil grid points (soil layers + 1).   
 Following this, the soil parameters and initial $H$ for the vegetated cells are listed for each soil layer in order of decreasing soil depth (the first row is the lowest layer of the soil column).   This format is repeated for the bare soil cells.   
 From left to right, the columns are: 
-	$\alpha$,$\theta_S$,$\theta_R$, $\lambda$, $K_s$, $H_i$, where $\lambda =  n-1 $ in Equation \ref{vanG_eqn} and $H_i$ is initialize with an equilibrium soil moisture profile.
+$\alpha$, $\theta_S$, $\theta_R$, $\lambda$, $K_s$, $H_i$, where $\lambda =  n-1 $ in Equation \ref{vanG_eqn} and $H_i$ is initialize with an equilibrium soil moisture profile.
 	
 \begin{verbatim}
 dz           zmax 
@@ -1198,6 +1216,7 @@ alpha    theta_S   theta_R    lambda    Ksat                   h_init
 
 \code{h.out}: columns are \code{j,k,h,u,v,zinflmap2, xflux0,yflux0,xflux1,yflux1}. 
 These variables are written for every grid cell, every \code{nprt} timesteps (i.e. at time intervals of \code{dt\_p}). Following this, the print iteration \code{itp} and current time {t} is written on a new line. An example for a 2$\times$2 grid is shown in Figure \ref{h.out_example}.  
+ \code{zinflmap2} contains the  volume of water infiltrated in cell (j,k) in m$^3$, and is reset to zero when written to file. 
 
  \begin{figure}[h]
  \centering
@@ -1207,7 +1226,7 @@ These variables are written for every grid cell, every \code{nprt} timesteps (i.
  \end{figure}
   
   
-% \code{zinflmap2} contains the total volume of water infiltrated in cell j,k, and is reset to zero when this variable is written to file. 
+
 
 
 \subsection{dvol.dat}
