@@ -6,7 +6,7 @@ certifi==2018.11.29
 cloudpickle==0.8.0
 cmocean==2.0
 cycler==0.10.0
-dask==1.1.1
+dask==2021.10.0
 decorator==4.3.2
 enum34==1.1.6
 futures==3.2.0
