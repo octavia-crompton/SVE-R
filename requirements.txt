@@ -19,7 +19,7 @@ jupyter-core==4.4.0
 kiwisolver==1.0.1
 matplotlib==2.2.3
 networkx==2.2
-numpy==1.16.1
+numpy==1.22.0
 pandas==0.24.1
 pathlib2==2.3.3
 pexpect==4.6.0
