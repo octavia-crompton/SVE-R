@@ -2,7 +2,7 @@ appnope==0.1.0
 backports-abc==0.5
 backports.functools-lru-cache==1.5
 backports.shutil-get-terminal-size==1.0.0
-certifi==2018.11.29
+certifi==2022.12.7
 cloudpickle==0.8.0
 cmocean==2.0
 cycler==0.10.0
